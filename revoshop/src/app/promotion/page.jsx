@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BadgePercent,
   Clock3,
@@ -34,15 +37,25 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+const PRODUCT_VOUCHER_STORAGE_KEY = "revoshop-product-voucher";
+const SHIPPING_VOUCHER_STORAGE_KEY = "revoshop-shipping-voucher";
+
 const promotions = [
   {
     category: "fashion",
     title: "Payday Sale",
     discount: "Up to 45% off",
     code: "PAYDAY45",
+    discountType: "percentage",
+    discountValue: 45,
+    maxDiscount: 40,
+    applicableCategories: ["Clothes", "Shoes"],
+    restrictionNote:
+      "This voucher only applies to Clothes and Shoes products. It cannot be used together with purchases from other product categories, but it can be combined with Free Shipping when eligible.",
     description:
       "Selected fashion, shoes, and daily essentials for a limited time.",
     minimumSpend: "$50",
+    minimumSpendValue: 50,
     endsIn: "18h 24m",
     claimed: 72,
     tone: "border-rose-200 bg-rose-50 text-rose-700",
@@ -55,11 +68,18 @@ const promotions = [
   {
     category: "tech",
     title: "Tech Deals",
-    discount: "Save 30%",
+    discount: "Save up to 30%",
     code: "TECH30",
+    discountType: "percentage",
+    discountValue: 30,
+    maxDiscount: 60,
+    applicableCategories: ["Electronics"],
+    restrictionNote:
+      "This voucher only applies to Electronics products. It cannot be used together with purchases from other product categories, but it can be combined with Free Shipping when eligible.",
     description:
       "Upgrade your electronics setup with special prices this week.",
     minimumSpend: "$120",
+    minimumSpendValue: 120,
     endsIn: "2d 06h",
     claimed: 58,
     tone: "border-sky-200 bg-sky-50 text-sky-700",
@@ -72,11 +92,18 @@ const promotions = [
   {
     category: "home",
     title: "Home Refresh",
-    discount: "Buy 2 Save 20%",
+    discount: "Buy 2 Save up to 20%",
     code: "HOME20",
+    discountType: "percentage",
+    discountValue: 20,
+    maxDiscount: 35,
+    applicableCategories: ["Furniture"],
+    restrictionNote:
+      "This voucher only applies to Furniture products. It cannot be used together with purchases from other product categories, but it can be combined with Free Shipping when eligible.",
     description:
       "Refresh your space with furniture and home picks from RevoShop.",
     minimumSpend: "$80",
+    minimumSpendValue: 80,
     endsIn: "3d 12h",
     claimed: 41,
     tone: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -91,8 +118,15 @@ const promotions = [
     title: "Shipping Boost",
     discount: "Free shipping",
     code: "SHIPFREE",
-    description: "Unlock delivery savings for checkout totals above $75.",
-    minimumSpend: "$75",
+    discountType: "free-shipping",
+    discountValue: 100,
+    maxDiscount: 8,
+    applicableCategories: ["All"],
+    restrictionNote:
+      "This voucher only applies to shipping benefits and can be combined with one eligible product category voucher in the same purchase.",
+    description: "Unlock delivery savings for checkout totals above $75000.",
+    minimumSpend: "$75000",
+    minimumSpendValue: 75000,
     endsIn: "1d 09h",
     claimed: 86,
     tone: "border-orange-200 bg-orange-50 text-orange-700",
@@ -115,7 +149,7 @@ const promotionTabs = [
 const benefits = [
   {
     title: "Free Shipping",
-    description: "Available for orders over $75.",
+    description: "Available for orders over $75000.",
     icon: Truck,
   },
   {
@@ -141,6 +175,19 @@ function PromotionGrid({ items }) {
 }
 
 function PromotionCard({ promotion }) {
+  const router = useRouter();
+
+  const handleClaimVoucher = () => {
+    const storageKey =
+      promotion.discountType === "free-shipping"
+        ? SHIPPING_VOUCHER_STORAGE_KEY
+        : PRODUCT_VOUCHER_STORAGE_KEY;
+
+    localStorage.setItem(storageKey, JSON.stringify(promotion));
+    window.dispatchEvent(new Event("voucher-updated"));
+    router.push("/cart");
+  };
+
   return (
     <Card className="bg-background shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
@@ -161,6 +208,10 @@ function PromotionCard({ promotion }) {
         <p className="min-h-12 text-sm leading-6 text-muted-foreground">
           {promotion.description}
         </p>
+
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
+          {promotion.restrictionNote}
+        </div>
 
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-lg bg-muted/70 p-3">
@@ -225,6 +276,13 @@ function PromotionCard({ promotion }) {
                 </div>
                 <Separator />
                 <div className="py-4">
+                  <p className="font-semibold">Voucher restriction</p>
+                  <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
+                    {promotion.restrictionNote}
+                  </p>
+                </div>
+                <Separator />
+                <div className="py-4">
                   <p className="font-semibold">Terms and conditions</p>
                   <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                     {promotion.terms.map((term) => (
@@ -251,11 +309,9 @@ function PromotionCard({ promotion }) {
             </SheetContent>
           </Sheet>
 
-          <Button asChild variant="secondary">
-            <Link href="/">
-              <Ticket aria-hidden="true" className="size-4" />
-              Claim
-            </Link>
+          <Button variant="secondary" onClick={handleClaimVoucher}>
+            <Ticket aria-hidden="true" className="size-4" />
+            Claim
           </Button>
         </div>
       </CardFooter>

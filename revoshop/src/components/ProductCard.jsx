@@ -19,19 +19,25 @@ export default function ProductCard({ product }) {
     imageUrl = imageUrl.replace(/["\[\]]/g, "").trim();
   }
 
+  const productDetailUrl = `/products/${product.id}`;
+
   return (
     <Card className="overflow-hidden transition hover:shadow-lg">
-      <div className="relative h-56 w-full bg-muted">
+      <Link
+        href={productDetailUrl}
+        aria-label={`View details for ${product.title}`}
+        className="group relative block h-56 w-full overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
         {imageUrl && (
           <Image
             src={imageUrl}
             alt={product.title}
             fill
-            className="object-cover"
+            className="object-cover transition duration-300 group-hover:scale-105"
             unoptimized
           />
         )}
-      </div>
+      </Link>
 
       <CardHeader>
         <Badge className="w-fit">{product.category?.name || "Product"}</Badge>
@@ -45,7 +51,7 @@ export default function ProductCard({ product }) {
 
       <CardFooter>
         <Button asChild className="w-full">
-          <Link href={`/products/${product.id}`}>View Detail</Link>
+          <Link href={productDetailUrl}>View Detail</Link>
         </Button>
       </CardFooter>
     </Card>

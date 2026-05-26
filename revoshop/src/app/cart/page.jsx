@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import {
   ArrowLeft,
+  BadgePercent,
   Minus,
   PackageCheck,
   Plus,
@@ -12,6 +13,7 @@ import {
   ShoppingBag,
   Trash2,
   Truck,
+  X,
 } from "lucide-react";
 
 import {
@@ -40,7 +42,15 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 
 const CART_STORAGE_KEY = "revoshop-cart";
-const FREE_SHIPPING_THRESHOLD = 75;
+const LEGACY_VOUCHER_STORAGE_KEY = "revoshop-voucher";
+const PRODUCT_VOUCHER_STORAGE_KEY = "revoshop-product-voucher";
+const SHIPPING_VOUCHER_STORAGE_KEY = "revoshop-shipping-voucher";
+const FREE_SHIPPING_THRESHOLD = 75000;
+const EMPTY_CART_SNAPSHOT = JSON.stringify({
+  cartItems: [],
+  selectedProductVoucher: null,
+  selectedShippingVoucher: null,
+});
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-US", {
@@ -57,12 +67,129 @@ function getStoredCartItems() {
   return JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
 }
 
-export default function CartPage() {
-  const [cartItems, setCartItems] = useState([]);
+function getStoredVoucher(storageKey, expectedDiscountType) {
+  if (typeof window === "undefined") {
+    return null;
+  }
 
-  useEffect(() => {
-    setCartItems(getStoredCartItems());
-  }, []);
+  const voucher = JSON.parse(localStorage.getItem(storageKey) || "null");
+  if (voucher) {
+    return voucher;
+  }
+
+  const legacyVoucher = JSON.parse(
+    localStorage.getItem(LEGACY_VOUCHER_STORAGE_KEY) || "null",
+  );
+
+  return legacyVoucher?.discountType === expectedDiscountType
+    ? legacyVoucher
+    : null;
+}
+
+function getCartSnapshot() {
+  if (typeof window === "undefined") {
+    return EMPTY_CART_SNAPSHOT;
+  }
+
+  return JSON.stringify({
+    cartItems: getStoredCartItems(),
+    selectedProductVoucher: getStoredVoucher(
+      PRODUCT_VOUCHER_STORAGE_KEY,
+      "percentage",
+    ),
+    selectedShippingVoucher: getStoredVoucher(
+      SHIPPING_VOUCHER_STORAGE_KEY,
+      "free-shipping",
+    ),
+  });
+}
+
+function subscribeToCartStorage(onStoreChange) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  window.addEventListener("cart-updated", onStoreChange);
+  window.addEventListener("voucher-updated", onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+
+  return () => {
+    window.removeEventListener("cart-updated", onStoreChange);
+    window.removeEventListener("voucher-updated", onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function calculateProductVoucherDiscount(cartItems, voucher) {
+  if (!voucher) {
+    return {
+      discount: 0,
+      eligibleSubtotal: 0,
+      status: "No voucher applied.",
+      isApplied: false,
+    };
+  }
+
+  const eligibleSubtotal = cartItems.reduce((total, item) => {
+    const isEligible = voucher.applicableCategories?.includes(item.category);
+    return isEligible ? total + item.price * item.quantity : total;
+  }, 0);
+
+  if (eligibleSubtotal < voucher.minimumSpendValue) {
+    return {
+      discount: 0,
+      eligibleSubtotal,
+      status: `Add ${formatCurrency(voucher.minimumSpendValue - eligibleSubtotal)} more eligible products to use ${voucher.code}.`,
+      isApplied: false,
+    };
+  }
+
+  const rawDiscount = eligibleSubtotal * (voucher.discountValue / 100);
+  const discount = Math.min(rawDiscount, voucher.maxDiscount);
+
+  return {
+    discount,
+    eligibleSubtotal,
+    status: `${voucher.code} applied to eligible ${voucher.category} products.`,
+    isApplied: discount > 0,
+  };
+}
+
+function calculateShippingVoucherDiscount(subtotal, voucher, shipping) {
+  if (!voucher) {
+    return {
+      discount: 0,
+      eligibleSubtotal: subtotal,
+      status: "No shipping voucher applied.",
+      isApplied: false,
+    };
+  }
+
+  if (subtotal < voucher.minimumSpendValue) {
+    return {
+      discount: 0,
+      eligibleSubtotal: subtotal,
+      status: `Add ${formatCurrency(voucher.minimumSpendValue - subtotal)} more to use ${voucher.code}.`,
+      isApplied: false,
+    };
+  }
+
+  return {
+    discount: shipping,
+    eligibleSubtotal: subtotal,
+    status: "Shipping voucher discount applied",
+    isApplied: true,
+  };
+}
+
+export default function CartPage() {
+  const storedCartSnapshot = useSyncExternalStore(
+    subscribeToCartStorage,
+    getCartSnapshot,
+    () => EMPTY_CART_SNAPSHOT,
+  );
+  const { cartItems, selectedProductVoucher, selectedShippingVoucher } =
+    useMemo(() => JSON.parse(storedCartSnapshot), [storedCartSnapshot]);
 
   const cartSummary = useMemo(() => {
     const subtotal = cartItems.reduce(
@@ -71,7 +198,18 @@ export default function CartPage() {
     );
     const shipping =
       subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : 8;
-    const discount = subtotal >= 120 ? subtotal * 0.1 : 0;
+    const productVoucherResult = calculateProductVoucherDiscount(
+      cartItems,
+      selectedProductVoucher,
+    );
+    const shippingVoucherResult = calculateShippingVoucherDiscount(
+      subtotal,
+      selectedShippingVoucher,
+      shipping,
+    );
+    const productDiscount = productVoucherResult.discount;
+    const shippingDiscount = shippingVoucherResult.discount;
+    const discount = productDiscount + shippingDiscount;
     const total = subtotal + shipping - discount;
     const itemCount = cartItems.reduce(
       (total, item) => total + item.quantity,
@@ -82,11 +220,21 @@ export default function CartPage() {
       100,
     );
 
-    return { subtotal, shipping, discount, total, itemCount, shippingProgress };
-  }, [cartItems]);
+    return {
+      subtotal,
+      shipping,
+      discount,
+      total,
+      itemCount,
+      shippingProgress,
+      productDiscount,
+      shippingDiscount,
+      productVoucherResult,
+      shippingVoucherResult,
+    };
+  }, [cartItems, selectedProductVoucher, selectedShippingVoucher]);
 
   const syncCart = (updatedCart) => {
-    setCartItems(updatedCart);
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
     window.dispatchEvent(new Event("cart-updated"));
   };
@@ -110,6 +258,18 @@ export default function CartPage() {
 
   const clearCart = () => {
     syncCart([]);
+  };
+
+  const removeProductVoucher = () => {
+    localStorage.removeItem(PRODUCT_VOUCHER_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
+    window.dispatchEvent(new Event("voucher-updated"));
+  };
+
+  const removeShippingVoucher = () => {
+    localStorage.removeItem(SHIPPING_VOUCHER_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
+    window.dispatchEvent(new Event("voucher-updated"));
   };
 
   const amountToFreeShipping = Math.max(
@@ -341,13 +501,88 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Promo discount
+                      Product voucher discount
                     </span>
                     <span className="font-medium text-emerald-700">
-                      -{formatCurrency(cartSummary.discount)}
+                      -{formatCurrency(cartSummary.productDiscount)}
                     </span>
                   </div>
+                  {selectedShippingVoucher && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">
+                        Shipping voucher discount
+                      </span>
+                      <span
+                        className={`text-right font-medium ${
+                          cartSummary.shippingVoucherResult.isApplied
+                            ? "text-emerald-700"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {cartSummary.shippingVoucherResult.isApplied
+                          ? "Shipping voucher discount applied"
+                          : "Not eligible yet"}
+                      </span>
+                    </div>
+                  )}
                 </div>
+
+                {selectedProductVoucher && (
+                  <div className="rounded-lg border bg-muted/50 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <Badge className="mb-2 gap-1.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                          <BadgePercent
+                            aria-hidden="true"
+                            className="size-3.5"
+                          />
+                          {selectedProductVoucher.code}
+                        </Badge>
+                        <p className="text-sm font-medium">
+                          {selectedProductVoucher.title}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {cartSummary.productVoucherResult.status}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={removeProductVoucher}
+                      >
+                        <X aria-hidden="true" className="size-4" />
+                        <span className="sr-only">Remove product voucher</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {selectedShippingVoucher && (
+                  <div className="rounded-lg border bg-muted/50 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <Badge className="mb-2 gap-1.5 bg-orange-100 text-orange-800 hover:bg-orange-100">
+                          <Truck aria-hidden="true" className="size-3.5" />
+                          {selectedShippingVoucher.code}
+                        </Badge>
+                        <p className="text-sm font-medium">
+                          {selectedShippingVoucher.title}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {cartSummary.shippingVoucherResult.status}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={removeShippingVoucher}
+                      >
+                        <X aria-hidden="true" className="size-4" />
+                        <span className="sr-only">Remove shipping voucher</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 <Separator />
 
@@ -381,7 +616,11 @@ export default function CartPage() {
                   Checkout Now
                 </Button>
                 <Button asChild variant="outline" className="w-full">
-                  <Link href="/promotion">Apply Promo Voucher</Link>
+                  <Link href="/promotion#active-promotions">
+                    {selectedProductVoucher || selectedShippingVoucher
+                      ? "Change Voucher"
+                      : "Apply Promo Voucher"}
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
