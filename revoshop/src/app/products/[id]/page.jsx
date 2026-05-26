@@ -84,7 +84,7 @@ export default function ProductDetailPage() {
           </p>
 
           <div className="mt-8">
-            <AddToCartButton />
+            <AddToCartButton product={product} />
           </div>
         </div>
       </section>

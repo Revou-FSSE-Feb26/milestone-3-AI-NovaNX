@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, Search, ShoppingCart, Store, Tag } from "lucide-react";
 
@@ -25,9 +26,34 @@ const navLinks = [
   { href: "/about", label: "About" },
 ];
 
+const CART_STORAGE_KEY = "revoshop-cart";
+
+function getCartItemCount() {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  const cartItems = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
+  return cartItems.reduce((total, item) => total + item.quantity, 0);
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  useEffect(() => {
+    const updateCartItemCount = () => setCartItemCount(getCartItemCount());
+
+    updateCartItemCount();
+    window.addEventListener("cart-updated", updateCartItemCount);
+    window.addEventListener("storage", updateCartItemCount);
+
+    return () => {
+      window.removeEventListener("cart-updated", updateCartItemCount);
+      window.removeEventListener("storage", updateCartItemCount);
+    };
+  }, []);
 
   const isActive = (href) => {
     if (href === "/") {
@@ -107,12 +133,19 @@ export default function Navbar() {
             </Link>
           </Button>
 
-          <Button variant="outline" size="sm" className="relative gap-1.5">
-            <ShoppingCart aria-hidden="true" className="size-4" />
-            Cart
-            <Badge className="absolute -right-2 -top-2 h-5 min-w-5 justify-center rounded-full px-1 text-[10px]">
-              0
-            </Badge>
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="relative gap-1.5"
+          >
+            <Link href="/cart">
+              <ShoppingCart aria-hidden="true" className="size-4" />
+              Cart
+              <Badge className="absolute -right-2 -top-2 h-5 min-w-5 justify-center rounded-full px-1 text-[10px]">
+                {cartItemCount}
+              </Badge>
+            </Link>
           </Button>
         </div>
 
@@ -190,13 +223,21 @@ export default function Navbar() {
                   </Button>
                 </SheetClose>
 
-                <Button variant="outline" className="justify-start gap-2">
-                  <ShoppingCart aria-hidden="true" className="size-4" />
-                  Cart
-                  <Badge className="ml-auto h-5 min-w-5 justify-center rounded-full px-1 text-[10px]">
-                    0
-                  </Badge>
-                </Button>
+                <SheetClose asChild>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="justify-start gap-2"
+                  >
+                    <Link href="/cart">
+                      <ShoppingCart aria-hidden="true" className="size-4" />
+                      Cart
+                      <Badge className="ml-auto h-5 min-w-5 justify-center rounded-full px-1 text-[10px]">
+                        {cartItemCount}
+                      </Badge>
+                    </Link>
+                  </Button>
+                </SheetClose>
               </div>
             </div>
           </SheetContent>
