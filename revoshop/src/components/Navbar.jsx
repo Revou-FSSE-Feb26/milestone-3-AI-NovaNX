@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, Search, ShoppingCart, Store, Tag } from "lucide-react";
+import { Menu, Search, ShoppingCart, Tag } from "lucide-react";
+
+import revoshopLogo from "@/assets/RevoshopLogo1.webp";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +28,7 @@ const navLinks = [
   { href: "/promotion", label: "Promotion" },
   { href: "/faq", label: "FAQ" },
   { href: "/about", label: "About" },
+  { href: "/admin", label: "Admin" },
 ];
 
 export default function Navbar() {
@@ -70,11 +74,14 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur-xl">
       <nav className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 font-bold">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Store aria-hidden="true" className="size-5" />
-          </span>
-          <span className="text-lg tracking-normal">RevoShop</span>
+        <Link href="/" className="flex items-center font-bold">
+          <Image
+            src={revoshopLogo}
+            alt="RevoShop"
+            priority
+            className="h-30 w-auto rounded-md object-contain"
+          />
+          <span className="sr-only">RevoShop</span>
         </Link>
 
         <div className="ml-4 hidden items-center gap-1 lg:flex">
@@ -150,10 +157,12 @@ export default function Navbar() {
           <SheetContent side="right" className="w-full max-w-sm">
             <SheetHeader>
               <SheetTitle className="flex items-center gap-2">
-                <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Store aria-hidden="true" className="size-4" />
-                </span>
-                RevoShop
+                <Image
+                  src={revoshopLogo}
+                  alt="RevoShop"
+                  className="h-9 w-auto rounded-md object-contain"
+                />
+                <span className="sr-only">RevoShop</span>
               </SheetTitle>
               <SheetDescription>
                 Browse products, promotions, and shopping support.

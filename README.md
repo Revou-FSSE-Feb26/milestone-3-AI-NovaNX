@@ -39,6 +39,12 @@ extend.
 - **Sticky Navbar** — site search, navigation links, live cart badge
   (updates via a custom `cart-updated` event + the native `storage` event),
   and a mobile sheet menu.
+- **Admin Dashboard (`/admin`)** — full product CRUD against the Platzi
+  Fake Store API: list all products in a responsive card grid, search,
+  create a new product via a side sheet form (title, price, category,
+  description, image URLs), edit any product in the same sheet, and
+  delete with an `AlertDialog` confirmation. Includes loading, validation,
+  and success/error feedback states.
 
 ## Tech Stack
 
@@ -62,6 +68,7 @@ revoshop/
     │   ├── layout.js        # root layout + global Navbar
     │   ├── page.js          # Home (product listing)
     │   ├── about/page.jsx
+    │   ├── admin/page.jsx           # admin product CRUD dashboard
     │   ├── cart/page.jsx
     │   ├── faq/page.jsx
     │   ├── products/[id]/page.jsx   # dynamic product detail
@@ -72,7 +79,7 @@ revoshop/
     │   ├── AddToCartButton.jsx
     │   └── ui/              # shadcn/ui primitives
     └── lib/
-        ├── api.js           # Platzi API fetchers
+        ├── api.js           # Platzi API client (GET/POST/PUT/DELETE)
         ├── cart.js          # cart storage keys + helpers
         └── utils.js         # cn(), cleanImageUrl(), formatCurrency()
 ```
@@ -86,6 +93,33 @@ revoshop/
   card, and navbar entry — no full page reloads.
 - The Home page reads the `?search=` query string with `useSearchParams()`
   (wrapped in `<Suspense>` to satisfy the App Router rules).
+
+## Admin Dashboard
+
+The `/admin` route provides product management with a **localStorage
+override layer** on top of the Platzi Fake Store API. Because the Platzi
+API is a shared sandbox, the override layer makes every change persist
+locally in the browser:
+
+| Action | Trigger             | Persistence Behavior                                                        |
+| ------ | ------------------- | --------------------------------------------------------------------------- |
+| List   | Page load + Refresh | `GET /products` + `GET /categories`, then deletes filtered & updates merged |
+| Create | "Add Product" sheet | New product stored locally with id `local-<timestamp>`, prepended to list   |
+| Update | Per‑card "Edit"     | Patch saved in `localStorage`; merged on top of remote product on read      |
+| Delete | Per‑card "Delete"   | Remote id added to a `deleted` set; locally created products removed        |
+| Reset  | "Reset local data"  | Clears all overrides — list falls back to pure API data                     |
+
+All overrides live under the key `revoshop:product-overrides` and follow
+the shape `{ created: Product[], updated: Record<id, Patch>, deleted: number[] }`.
+Categories are cached under `revoshop:categories-cache` so locally
+created/updated products can resolve their category object without
+re‑fetching. A `products-updated` custom event is dispatched whenever
+overrides change so the dashboard summary stays live.
+
+This layering means the dashboard behaves like a real CRUD admin — your
+changes survive page reloads — while still demonstrating the full Platzi
+API surface (`GET / POST / PUT / DELETE /products`) through the
+`request()` helper in [`src/lib/api.js`](revoshop/src/lib/api.js).
 
 ## State Management
 

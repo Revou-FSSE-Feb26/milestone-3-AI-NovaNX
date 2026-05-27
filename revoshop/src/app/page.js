@@ -93,11 +93,11 @@ function HomeContent() {
             <ShoppingBag aria-hidden="true" className="size-3.5" />
             Product Catalog
           </Badge>
-          <h1 className="text-3xl font-bold">RevoShop</h1>
+          <h1 className="text-3xl font-bold">Our Catalog</h1>
           <p className="mt-2 text-muted-foreground">
             {searchQuery
               ? `Search results for "${searchParams.get("search")}"`
-              : "Browse our latest products from Platzi Fake Store API."}
+              : "Browse our latest products"}
           </p>
         </div>
 
