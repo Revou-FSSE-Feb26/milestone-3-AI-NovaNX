@@ -115,7 +115,8 @@ export default function Navbar() {
             <Button
               type="submit"
               size="sm"
-              className="absolute right-1 top-1/2 h-7 -translate-y-1/2"
+              variant="secondary"
+              className="absolute right-1 top-1/2 h-7 -translate-y-1/2 border border-input shadow-sm hover:bg-secondary/80"
             >
               Search
             </Button>
@@ -139,9 +140,14 @@ export default function Navbar() {
             <Link href="/cart">
               <ShoppingCart aria-hidden="true" className="size-4" />
               Cart
-              <Badge className="absolute -right-2 -top-2 h-5 min-w-5 justify-center rounded-full px-1 text-[10px]">
-                {cartItemCount}
-              </Badge>
+              {cartItemCount > 0 && (
+                <Badge
+                  aria-label={`${cartItemCount} items in cart`}
+                  className="pointer-events-none absolute -right-2.5 -top-2.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-background bg-primary px-1.5 text-[11px] font-semibold leading-none tabular-nums text-primary-foreground shadow-sm"
+                >
+                  {cartItemCount > 99 ? "99+" : cartItemCount}
+                </Badge>
+              )}
             </Link>
           </Button>
         </div>
@@ -184,7 +190,8 @@ export default function Navbar() {
                 <Button
                   type="submit"
                   size="sm"
-                  className="absolute right-1 top-1/2 h-7 -translate-y-1/2"
+                  variant="secondary"
+                  className="absolute right-1 top-1/2 h-7 -translate-y-1/2 border border-input shadow-sm hover:bg-secondary/80"
                 >
                   Go
                 </Button>
@@ -231,9 +238,14 @@ export default function Navbar() {
                     <Link href="/cart">
                       <ShoppingCart aria-hidden="true" className="size-4" />
                       Cart
-                      <Badge className="ml-auto h-5 min-w-5 justify-center rounded-full px-1 text-[10px]">
-                        {cartItemCount}
-                      </Badge>
+                      {cartItemCount > 0 && (
+                        <Badge
+                          aria-label={`${cartItemCount} items in cart`}
+                          className="ml-auto flex h-5.5 min-w-5.5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold leading-none tabular-nums text-primary-foreground"
+                        >
+                          {cartItemCount > 99 ? "99+" : cartItemCount}
+                        </Badge>
+                      )}
                     </Link>
                   </Button>
                 </SheetClose>
