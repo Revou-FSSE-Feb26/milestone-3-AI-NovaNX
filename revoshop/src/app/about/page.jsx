@@ -280,7 +280,7 @@ export default function AboutPage() {
           </Card>
 
           <Tabs defaultValue="values" className="gap-5">
-            <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:w-fit">
+            <TabsList className="grid h-auto w-full grid-cols-3 gap-1 group-data-horizontal/tabs:h-auto sm:w-fit">
               <TabsTrigger value="values" className="h-9 px-3">
                 Values
               </TabsTrigger>

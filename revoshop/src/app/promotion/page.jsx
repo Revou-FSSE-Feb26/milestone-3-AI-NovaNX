@@ -409,7 +409,7 @@ export default function PromotionPage() {
           </div>
 
           <Tabs defaultValue="all" className="gap-5">
-            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:w-fit sm:grid-cols-none">
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 group-data-horizontal/tabs:h-auto sm:inline-flex sm:w-fit sm:grid-cols-none">
               {promotionTabs.map((tab) => (
                 <TabsTrigger
                   key={tab.value}
