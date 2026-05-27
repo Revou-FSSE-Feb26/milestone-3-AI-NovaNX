@@ -1,58 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, ShoppingCart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cleanImageUrl } from "@/lib/utils";
+import { readCartItems, writeCartItems } from "@/lib/cart";
 
-const CART_STORAGE_KEY = "revoshop-cart";
-
-function cleanImageUrl(imageUrl) {
-  if (typeof imageUrl !== "string") {
-    return "";
-  }
-
-  return imageUrl.replace(/["\[\]]/g, "").trim();
-}
+const ADDED_FEEDBACK_DURATION_MS = 2000;
 
 export default function AddToCartButton({ product }) {
   const [added, setAdded] = useState(false);
+
+  useEffect(() => {
+    if (!added) {
+      return;
+    }
+
+    const timeoutId = setTimeout(
+      () => setAdded(false),
+      ADDED_FEEDBACK_DURATION_MS,
+    );
+
+    return () => clearTimeout(timeoutId);
+  }, [added]);
 
   const handleAddToCart = () => {
     if (!product) {
       return;
     }
 
-    const cartItems = JSON.parse(
-      localStorage.getItem(CART_STORAGE_KEY) || "[]",
-    );
+    const cartItems = readCartItems();
     const existingItem = cartItems.find((item) => item.id === product.id);
 
-    let updatedCart;
+    const updatedCart = existingItem
+      ? cartItems.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
+        )
+      : [
+          ...cartItems,
+          {
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            category: product.category?.name || "Product",
+            image: cleanImageUrl(product.images?.[0]),
+            quantity: 1,
+          },
+        ];
 
-    if (existingItem) {
-      updatedCart = cartItems.map((item) =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item,
-      );
-    } else {
-      updatedCart = [
-        ...cartItems,
-        {
-          id: product.id,
-          title: product.title,
-          price: product.price,
-          category: product.category?.name || "Product",
-          image: cleanImageUrl(product.images?.[0]),
-          quantity: 1,
-        },
-      ];
-    }
-
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
-    window.dispatchEvent(new Event("cart-updated"));
+    writeCartItems(updatedCart);
     setAdded(true);
   };
 

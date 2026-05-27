@@ -36,9 +36,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const PRODUCT_VOUCHER_STORAGE_KEY = "revoshop-product-voucher";
-const SHIPPING_VOUCHER_STORAGE_KEY = "revoshop-shipping-voucher";
+import {
+  PRODUCT_VOUCHER_STORAGE_KEY,
+  SHIPPING_VOUCHER_STORAGE_KEY,
+  VOUCHER_UPDATED_EVENT,
+} from "@/lib/cart";
 
 const promotions = [
   {
@@ -184,7 +186,7 @@ function PromotionCard({ promotion }) {
         : PRODUCT_VOUCHER_STORAGE_KEY;
 
     localStorage.setItem(storageKey, JSON.stringify(promotion));
-    window.dispatchEvent(new Event("voucher-updated"));
+    window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
     router.push("/cart");
   };
 

@@ -14,7 +14,7 @@ export async function getProductById(id) {
   const response = await fetch(`${BASE_URL}/products/${id}`);
 
   if (!response.ok) {
-    throw new Error("Failed to fetch products");
+    throw new Error("Failed to fetch product");
   }
 
   return response.json();

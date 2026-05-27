@@ -18,6 +18,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { CART_UPDATED_EVENT, getCartItemCount } from "@/lib/cart";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -25,17 +26,6 @@ const navLinks = [
   { href: "/faq", label: "FAQ" },
   { href: "/about", label: "About" },
 ];
-
-const CART_STORAGE_KEY = "revoshop-cart";
-
-function getCartItemCount() {
-  if (typeof window === "undefined") {
-    return 0;
-  }
-
-  const cartItems = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
-  return cartItems.reduce((total, item) => total + item.quantity, 0);
-}
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -46,11 +36,11 @@ export default function Navbar() {
     const updateCartItemCount = () => setCartItemCount(getCartItemCount());
 
     updateCartItemCount();
-    window.addEventListener("cart-updated", updateCartItemCount);
+    window.addEventListener(CART_UPDATED_EVENT, updateCartItemCount);
     window.addEventListener("storage", updateCartItemCount);
 
     return () => {
-      window.removeEventListener("cart-updated", updateCartItemCount);
+      window.removeEventListener(CART_UPDATED_EVENT, updateCartItemCount);
       window.removeEventListener("storage", updateCartItemCount);
     };
   }, []);

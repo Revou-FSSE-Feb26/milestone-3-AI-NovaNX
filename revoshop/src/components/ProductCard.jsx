@@ -11,14 +11,10 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cleanImageUrl } from "@/lib/utils";
 
-export default function ProductCard({ product }) {
-  // Clean image URL - remove quotes and brackets if present
-  let imageUrl = product.images?.[0] || "";
-  if (typeof imageUrl === "string") {
-    imageUrl = imageUrl.replace(/["\[\]]/g, "").trim();
-  }
-
+export default function ProductCard({ product, priority = false }) {
+  const imageUrl = cleanImageUrl(product.images?.[0]);
   const productDetailUrl = `/products/${product.id}`;
 
   return (
@@ -33,7 +29,9 @@ export default function ProductCard({ product }) {
             src={imageUrl}
             alt={product.title}
             fill
+            sizes="(min-width: 1280px) 320px, (min-width: 640px) 50vw, 100vw"
             className="object-cover transition duration-300 group-hover:scale-105"
+            priority={priority}
             unoptimized
           />
         )}

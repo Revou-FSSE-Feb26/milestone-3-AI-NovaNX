@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getProductById } from "@/lib/api";
+import { cleanImageUrl } from "@/lib/utils";
 import AddToCartButton from "@/components/AddToCartButton";
 
 export default function ProductDetailPage() {
@@ -43,10 +44,7 @@ export default function ProductDetailPage() {
     return <p className="p-8">Product not found.</p>;
   }
 
-  let imageUrl = product.images?.[0] || "";
-  if (typeof imageUrl === "string") {
-    imageUrl = imageUrl.replace(/["\[\]]/g, "").trim();
-  }
+  const imageUrl = cleanImageUrl(product.images?.[0]);
 
   return (
     <main className="min-h-screen px-6 py-10">
@@ -57,7 +55,9 @@ export default function ProductDetailPage() {
               src={imageUrl}
               alt={product.title}
               fill
+              sizes="(min-width: 768px) 50vw, 100vw"
               className="object-cover"
+              priority
               unoptimized
             />
           )}

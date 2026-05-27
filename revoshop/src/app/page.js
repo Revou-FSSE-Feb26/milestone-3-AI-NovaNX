@@ -181,8 +181,12 @@ function HomeContent() {
 
             {filteredProducts.length > 0 ? (
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                {filteredProducts.map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    priority={index < 3}
+                  />
                 ))}
               </div>
             ) : (

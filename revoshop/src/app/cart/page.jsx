@@ -40,24 +40,22 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { formatCurrency } from "@/lib/utils";
+import {
+  CART_STORAGE_KEY,
+  CART_UPDATED_EVENT,
+  LEGACY_VOUCHER_STORAGE_KEY,
+  PRODUCT_VOUCHER_STORAGE_KEY,
+  SHIPPING_VOUCHER_STORAGE_KEY,
+  VOUCHER_UPDATED_EVENT,
+} from "@/lib/cart";
 
-const CART_STORAGE_KEY = "revoshop-cart";
-const LEGACY_VOUCHER_STORAGE_KEY = "revoshop-voucher";
-const PRODUCT_VOUCHER_STORAGE_KEY = "revoshop-product-voucher";
-const SHIPPING_VOUCHER_STORAGE_KEY = "revoshop-shipping-voucher";
 const FREE_SHIPPING_THRESHOLD = 75000;
 const EMPTY_CART_SNAPSHOT = JSON.stringify({
   cartItems: [],
   selectedProductVoucher: null,
   selectedShippingVoucher: null,
 });
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
 
 function getStoredCartItems() {
   if (typeof window === "undefined") {
@@ -109,13 +107,13 @@ function subscribeToCartStorage(onStoreChange) {
     return () => {};
   }
 
-  window.addEventListener("cart-updated", onStoreChange);
-  window.addEventListener("voucher-updated", onStoreChange);
+  window.addEventListener(CART_UPDATED_EVENT, onStoreChange);
+  window.addEventListener(VOUCHER_UPDATED_EVENT, onStoreChange);
   window.addEventListener("storage", onStoreChange);
 
   return () => {
-    window.removeEventListener("cart-updated", onStoreChange);
-    window.removeEventListener("voucher-updated", onStoreChange);
+    window.removeEventListener(CART_UPDATED_EVENT, onStoreChange);
+    window.removeEventListener(VOUCHER_UPDATED_EVENT, onStoreChange);
     window.removeEventListener("storage", onStoreChange);
   };
 }
@@ -236,7 +234,7 @@ export default function CartPage() {
 
   const syncCart = (updatedCart) => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
-    window.dispatchEvent(new Event("cart-updated"));
+    window.dispatchEvent(new Event(CART_UPDATED_EVENT));
   };
 
   const updateQuantity = (productId, quantity) => {
@@ -263,13 +261,13 @@ export default function CartPage() {
   const removeProductVoucher = () => {
     localStorage.removeItem(PRODUCT_VOUCHER_STORAGE_KEY);
     localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
-    window.dispatchEvent(new Event("voucher-updated"));
+    window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
   };
 
   const removeShippingVoucher = () => {
     localStorage.removeItem(SHIPPING_VOUCHER_STORAGE_KEY);
     localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
-    window.dispatchEvent(new Event("voucher-updated"));
+    window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
   };
 
   const amountToFreeShipping = Math.max(
@@ -371,6 +369,7 @@ export default function CartPage() {
                         src={item.image}
                         alt={item.title}
                         fill
+                        sizes="112px"
                         className="object-cover"
                         unoptimized
                       />
