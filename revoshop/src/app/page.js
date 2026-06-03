@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Filter, PackageSearch, ShoppingBag } from "lucide-react";
 
 import ProductCard from "@/components/ProductCard";
@@ -16,12 +16,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { readAuthSession } from "@/lib/auth";
 
 function HomeContent() {
-  
+  const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search")?.toLowerCase().trim() || "";
 
+  const [authChecked, setAuthChecked] = useState(false);
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,23 @@ function HomeContent() {
   }, [products, searchQuery, selectedCategory]);
 
   useEffect(() => {
+    queueMicrotask(() => {
+      const session = readAuthSession();
+
+      if (!session) {
+        router.replace("/login");
+        return;
+      }
+
+      setAuthChecked(true);
+    });
+  }, [router]);
+
+  useEffect(() => {
+    if (!authChecked) {
+      return;
+    }
+
     async function loadProducts() {
       try {
         // Ambil semua data produk.
@@ -77,9 +96,9 @@ function HomeContent() {
     }
 
     loadProducts();
-  }, []);
+  }, [authChecked]);
 
-  if (loading) {
+  if (!authChecked || loading) {
     return <p className="p-8">Loading products...</p>;
   }
 

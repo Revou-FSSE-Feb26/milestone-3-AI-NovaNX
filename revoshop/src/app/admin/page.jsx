@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   AlertTriangle,
   CheckCircle2,
   Database,
+  Lock,
   Layers,
   Loader2,
   PackagePlus,
@@ -61,6 +63,7 @@ import {
   PRODUCTS_UPDATED_EVENT,
   updateProduct,
 } from "@/lib/api";
+import { readAuthSession, subscribeToAuthSession } from "@/lib/auth";
 import { cleanImageUrl, formatCurrency } from "@/lib/utils";
 
 const EMPTY_FORM = {
@@ -194,6 +197,8 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
 }
 
 export default function AdminPage() {
+  const [authSession, setAuthSession] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -224,6 +229,10 @@ export default function AdminPage() {
   );
 
   const loadData = useCallback(async () => {
+    if (authSession?.role !== "admin") {
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
@@ -239,11 +248,26 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [refreshOverridesSummary]);
+  }, [authSession?.role, refreshOverridesSummary]);
 
   useEffect(() => {
-    queueMicrotask(loadData);
-  }, [loadData]);
+    queueMicrotask(() => {
+      setAuthSession(readAuthSession());
+      setAuthChecked(true);
+    });
+
+    const unsubscribe = subscribeToAuthSession(() => {
+      setAuthSession(readAuthSession());
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (authSession?.role === "admin") {
+      queueMicrotask(loadData);
+    }
+  }, [authSession?.role, loadData]);
 
   useEffect(() => {
     const handler = () => refreshOverridesSummary();
@@ -356,6 +380,57 @@ export default function AdminPage() {
       setDeletingId(null);
     }
   };
+
+  if (!authChecked) {
+    return (
+      <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-3xl">
+          <Card className="bg-background text-center shadow-sm">
+            <CardHeader className="items-center p-8">
+              <CardTitle>Checking access...</CardTitle>
+              <CardDescription>
+                Please wait while RevoShop checks your login session.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </section>
+      </main>
+    );
+  }
+
+  if (authSession?.role !== "admin") {
+    return (
+      <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-3xl">
+          <Card className="bg-background text-center shadow-sm">
+            <CardHeader className="items-center p-8">
+              <div className="mb-3 flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                <Lock aria-hidden="true" className="size-8" />
+              </div>
+              <Badge variant="outline" className="bg-muted/60">
+                Admin Only
+              </Badge>
+              <CardTitle className="mt-3 text-3xl font-bold">
+                This page can only be accessed by Admin.
+              </CardTitle>
+              <CardDescription className="max-w-xl text-base leading-7">
+                Please log in with an admin account to manage RevoShop
+                products.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center gap-3 pb-8">
+              <Button asChild>
+                <Link href="/login">Login as Admin</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/">Back to Home</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">

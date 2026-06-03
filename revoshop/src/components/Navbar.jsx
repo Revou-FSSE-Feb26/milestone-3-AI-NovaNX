@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, Search, ShoppingCart, Tag } from "lucide-react";
+import {
+  LogIn,
+  LogOut,
+  Menu,
+  Search,
+  ShoppingCart,
+  Tag,
+  User,
+} from "lucide-react";
 
 import revoshopLogo from "@/assets/RevoshopLogo1.webp";
 
@@ -22,6 +30,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { CART_UPDATED_EVENT, getCartItemCount } from "@/lib/cart";
+import {
+  clearAuthSession,
+  getAuthSessionServerSnapshot,
+  getAuthSessionSnapshot,
+  subscribeToAuthSession,
+} from "@/lib/auth";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -57,6 +71,17 @@ export default function Navbar() {
     getCartItemCountSnapshot,
     getCartItemCountServerSnapshot,
   );
+  const authSessionSnapshot = useSyncExternalStore(
+    subscribeToAuthSession,
+    getAuthSessionSnapshot,
+    getAuthSessionServerSnapshot,
+  );
+  const authSession = useMemo(
+    () => JSON.parse(authSessionSnapshot),
+    [authSessionSnapshot],
+  );
+  const isLoginPage = pathname === "/login";
+  const isUserRole = authSession?.role === "user";
 
   const isActive = (href) => {
     if (href === "/") {
@@ -80,6 +105,29 @@ export default function Navbar() {
     router.push(`/?search=${encodeURIComponent(query)}`);
   };
 
+  const handleLogout = () => {
+    clearAuthSession();
+    router.push("/login");
+  };
+
+  if (isLoginPage) {
+    return (
+      <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur-xl">
+        <nav className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center font-bold">
+            <Image
+              src={revoshopLogo}
+              alt="RevoShop"
+              priority
+              className="h-30 w-auto rounded-md object-contain"
+            />
+            <span className="sr-only">RevoShop</span>
+          </div>
+        </nav>
+      </header>
+    );
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur-xl">
       <nav className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
@@ -94,16 +142,35 @@ export default function Navbar() {
         </Link>
 
         <div className="ml-4 hidden items-center gap-1 lg:flex">
-          {navLinks.map((link) => (
-            <Button
-              key={link.href}
-              asChild
-              variant={isActive(link.href) ? "secondary" : "ghost"}
-              size="sm"
-            >
-              <Link href={link.href}>{link.label}</Link>
-            </Button>
-          ))}
+          {navLinks.map((link) => {
+            const isAdminLink = link.href === "/admin";
+            const isRestrictedAdminLink = isAdminLink && isUserRole;
+
+            return (
+              <Button
+                key={link.href}
+                asChild
+                variant={isActive(link.href) ? "secondary" : "ghost"}
+                size="sm"
+                className={
+                  isRestrictedAdminLink
+                    ? "text-muted-foreground hover:text-muted-foreground"
+                    : undefined
+                }
+              >
+                <Link
+                  href={link.href}
+                  title={
+                    isRestrictedAdminLink
+                      ? "Halaman ini hanya diakses oleh Admin."
+                      : undefined
+                  }
+                >
+                  {link.label}
+                </Link>
+              </Button>
+            );
+          })}
         </div>
 
           {/* form search untuk desktop. */}
@@ -160,6 +227,31 @@ export default function Navbar() {
               )}
             </Link>
           </Button>
+
+          {authSession ? (
+            <>
+              <Badge variant="outline" className="gap-1.5 bg-muted/60">
+                <User aria-hidden="true" className="size-3.5" />
+                {authSession.role}
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="gap-1.5"
+              >
+                <LogOut aria-hidden="true" className="size-4" />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button asChild variant="outline" size="sm" className="gap-1.5">
+              <Link href="/login">
+                <LogIn aria-hidden="true" className="size-4" />
+                Login
+              </Link>
+            </Button>
+          )}
         </div>
 
         {/* Drawer untuk Mobile menu */}
@@ -212,22 +304,75 @@ export default function Navbar() {
               <Separator className="my-4" />
 
               <div className="grid gap-2">
-                {navLinks.map((link) => (
-                  <SheetClose key={link.href} asChild>
-                    <Button
-                      asChild
-                      variant={isActive(link.href) ? "secondary" : "ghost"}
-                      className="justify-start"
-                    >
-                      <Link href={link.href}>{link.label}</Link>
-                    </Button>
-                  </SheetClose>
-                ))}
+                {navLinks.map((link) => {
+                  const isAdminLink = link.href === "/admin";
+                  const isRestrictedAdminLink = isAdminLink && isUserRole;
+
+                  return (
+                    <SheetClose key={link.href} asChild>
+                      <Button
+                        asChild
+                        variant={isActive(link.href) ? "secondary" : "ghost"}
+                        className={`justify-start ${
+                          isRestrictedAdminLink
+                            ? "text-muted-foreground hover:text-muted-foreground"
+                            : ""
+                        }`}
+                      >
+                        <Link
+                          href={link.href}
+                          title={
+                            isRestrictedAdminLink
+                              ? "Halaman ini hanya diakses oleh Admin."
+                              : undefined
+                          }
+                        >
+                          {link.label}
+                        </Link>
+                      </Button>
+                    </SheetClose>
+                  );
+                })}
               </div>
 
               <Separator className="my-4" />
 
               <div className="grid gap-2">
+                {authSession ? (
+                  <>
+                    <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
+                      <User aria-hidden="true" className="size-4" />
+                      <span className="font-medium">{authSession.email}</span>
+                      <Badge variant="outline" className="ml-auto bg-background">
+                        {authSession.role}
+                      </Badge>
+                    </div>
+                    <SheetClose asChild>
+                      <Button
+                        variant="outline"
+                        className="justify-start gap-2"
+                        onClick={handleLogout}
+                      >
+                        <LogOut aria-hidden="true" className="size-4" />
+                        Logout
+                      </Button>
+                    </SheetClose>
+                  </>
+                ) : (
+                  <SheetClose asChild>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="justify-start gap-2"
+                    >
+                      <Link href="/login">
+                        <LogIn aria-hidden="true" className="size-4" />
+                        Login
+                      </Link>
+                    </Button>
+                  </SheetClose>
+                )}
+
                 <SheetClose asChild>
                   <Button
                     asChild
