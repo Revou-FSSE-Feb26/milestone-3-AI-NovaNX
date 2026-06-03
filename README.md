@@ -14,7 +14,7 @@ through a small but realistic shopping experience.
 
 ## Overview
 
-RevoShop is a single‑vendor storefront that lets a visitor browse a product
+RevoShop is a single‑vendor storefront that lets a logged-in visitor browse a product
 catalog, open a product detail page, add items to a cart, claim promotion
 vouchers, and read FAQ / About content. Product data is pulled from the
 [Platzi Fake Store API](https://fakeapi.platzi.com/) and the cart state is
@@ -26,6 +26,9 @@ extend.
 
 ## Features
 
+- **Local Login (`/login`)** — simple private routing with `localStorage`,
+  user/admin role sessions, invalid-login feedback, and automatic redirect
+  from Home to Login when no session exists.
 - **Product Listing (Home)** — responsive grid, category sidebar filter,
   search via the `?search=` query param, loading and empty states.
 - **Product Detail (Dynamic Route)** — `/products/[id]` page with image,
@@ -43,8 +46,8 @@ extend.
   Fake Store API: list all products in a responsive card grid, search,
   create a new product via a side sheet form (title, price, category,
   description, image URLs), edit any product in the same sheet, and
-  delete with an `AlertDialog` confirmation. Includes loading, validation,
-  and success/error feedback states.
+  delete with an `AlertDialog` confirmation. Includes role-based access
+  control, loading, validation, and success/error feedback states.
 
 ## Tech Stack
 
@@ -71,6 +74,7 @@ revoshop/
     │   ├── admin/page.jsx           # admin product CRUD dashboard
     │   ├── cart/page.jsx
     │   ├── faq/page.jsx
+    │   ├── login/page.jsx           # localStorage-based login page
     │   ├── products/[id]/page.jsx   # dynamic product detail
     │   └── promotion/page.jsx
     ├── components/
@@ -80,6 +84,7 @@ revoshop/
     │   └── ui/              # shadcn/ui primitives
     └── lib/
         ├── api.js           # Platzi API client (GET/POST/PUT/DELETE)
+        ├── auth.js          # login credentials + localStorage auth session
         ├── cart.js          # cart storage keys + helpers
         └── utils.js         # cn(), cleanImageUrl(), formatCurrency()
 ```
@@ -87,12 +92,30 @@ revoshop/
 ## Routing & Navigation
 
 - File‑based routing under `src/app/`.
+- Login route: `src/app/login/page.jsx` validates fixed user/admin
+  credentials and stores the session in `localStorage`.
 - Dynamic route: `src/app/products/[id]/page.jsx` reads the `id` with
   `useParams()` from `next/navigation`.
 - Client‑side navigation via `<Link>` from `next/link` in every page,
   card, and navbar entry — no full page reloads.
 - The Home page reads the `?search=` query string with `useSearchParams()`
   (wrapped in `<Suspense>` to satisfy the App Router rules).
+- When there is no local auth session, opening Home redirects the visitor to
+  `/login`. After a successful login, the user is redirected back to Home.
+
+## Login Accounts
+
+This project uses a simple local login flow for assignment purposes. No API,
+JWT, or backend token is used; the authenticated session is stored in
+`localStorage` under the key `revoshop-auth-session`.
+
+| Role  | Email               | Password   | Access                                      |
+| ----- | ------------------- | ---------- | ------------------------------------------- |
+| User  | `user@example.com`  | `user123`  | Can use the storefront, cart, and vouchers  |
+| Admin | `admin@example.com` | `admin123` | Can access the storefront and `/admin` CRUD |
+
+If a logged-in user account opens `/admin`, the app shows an Admin-only access
+card. Invalid login credentials show a rejection card on the login page.
 
 ## Admin Dashboard
 
