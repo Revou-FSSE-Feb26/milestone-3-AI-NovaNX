@@ -184,16 +184,32 @@ The image domains used by the Platzi API are already whitelisted in
 
 ## Screenshots / Demo
 
-> Add screenshots of the Home, Product Detail, Cart, and Promotion pages
-> here, or link a short demo video.
+### Login
 
-- Home: `docs/screenshots/home.png`
-- Product Detail: `docs/screenshots/product-detail.png`
-- Cart: `docs/screenshots/cart.png`
-- Promotions: `docs/screenshots/promotions.png`
+![Login](revoshop/src/assets/Login.png)
+
+### Home
+
+![Home](revoshop/src/assets/Home.png)
+
+### Product Detail
+
+![Product Detail](revoshop/src/assets/ProductDetail.png)
+
+### Cart
+
+![Cart](revoshop/src/assets/Cart.png)
+
+### Promotions
+
+![Promotions](revoshop/src/assets/Promotion.png)
+
+### Product Management (Admin Page)
+
+![Product Management Admin Page](revoshop/src/assets/Admin.png)
+
 
 ## Acknowledgements
 
-- [RevoU FSSE](https://revou.co/) — program & assignment brief.
 - [Platzi Fake Store API](https://fakeapi.platzi.com/) — product data.
 - [shadcn/ui](https://ui.shadcn.com/) — accessible component primitives.
