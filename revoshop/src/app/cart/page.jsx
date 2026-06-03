@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   ArrowLeft,
   BadgePercent,
+  Check,
   Minus,
   PackageCheck,
   Plus,
@@ -48,6 +49,7 @@ import {
   PRODUCT_VOUCHER_STORAGE_KEY,
   SHIPPING_VOUCHER_STORAGE_KEY,
   VOUCHER_UPDATED_EVENT,
+  isVoucherCategoryEligible,
 } from "@/lib/cart";
 
 const FREE_SHIPPING_THRESHOLD = 75000;
@@ -129,7 +131,9 @@ function calculateProductVoucherDiscount(cartItems, voucher) {
   }
 
   const eligibleSubtotal = cartItems.reduce((total, item) => {
-    const isEligible = voucher.applicableCategories?.includes(item.category);
+    const isEligible = voucher.applicableCategories?.some((category) =>
+      isVoucherCategoryEligible(item.category, category),
+    );
     return isEligible ? total + item.price * item.quantity : total;
   }, 0);
 
@@ -181,6 +185,7 @@ function calculateShippingVoucherDiscount(subtotal, voucher, shipping) {
 }
 
 export default function CartPage() {
+  const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const storedCartSnapshot = useSyncExternalStore(
     subscribeToCartStorage,
     getCartSnapshot,
@@ -267,6 +272,14 @@ export default function CartPage() {
   const removeShippingVoucher = () => {
     localStorage.removeItem(SHIPPING_VOUCHER_STORAGE_KEY);
     localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
+    window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
+  };
+
+  const completeCheckout = () => {
+    localStorage.removeItem(PRODUCT_VOUCHER_STORAGE_KEY);
+    localStorage.removeItem(SHIPPING_VOUCHER_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
+    syncCart([]);
     window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
   };
 
@@ -610,10 +623,35 @@ export default function CartPage() {
               </CardContent>
 
               <CardFooter className="flex-col gap-3">
-                <Button className="w-full gap-2">
-                  <PackageCheck aria-hidden="true" className="size-4" />
-                  Checkout Now
-                </Button>
+                <AlertDialog
+                  open={isCheckoutDialogOpen}
+                  onOpenChange={setIsCheckoutDialogOpen}
+                >
+                  <AlertDialogTrigger asChild>
+                    <Button className="w-full gap-2">
+                      <PackageCheck aria-hidden="true" className="size-4" />
+                      Checkout Now
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogMedia>
+                        <Check aria-hidden="true" className="size-5" />
+                      </AlertDialogMedia>
+                      <AlertDialogTitle>Checkout processed.</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Your order has been created for{" "}
+                        {formatCurrency(cartSummary.total)}. The cart will be
+                        cleared after you close this confirmation.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogAction onClick={completeCheckout}>
+                        Done
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <Button asChild variant="outline" className="w-full">
                   <Link href="/promotion#active-promotions">
                     {selectedProductVoucher || selectedShippingVoucher

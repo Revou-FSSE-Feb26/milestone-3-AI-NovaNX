@@ -5,6 +5,26 @@ const CATEGORIES_CACHE_KEY = "revoshop:categories-cache";
 
 export const PRODUCTS_UPDATED_EVENT = "products-updated";
 
+// Siapkan data produk dari Platzi Fake Store API:
+// - id
+// - name
+// - price
+// - image
+// - description
+// - category
+function normalizeProduct(product) {
+  const images = Array.isArray(product.images)
+    ? product.images
+    : [product.image].filter(Boolean);
+
+  return {
+    ...product,
+    name: product.name || product.title,
+    image: product.image || images[0] || "",
+    images,
+  };
+}
+
 function isBrowser() {
   return typeof window !== "undefined";
 }
@@ -78,9 +98,11 @@ function buildProductFromPayload(payload, categories, base = {}) {
   return {
     ...base,
     title: payload.title,
+    name: payload.title,
     price: payload.price,
     description: payload.description,
     category: resolveCategory(payload.categoryId, categories),
+    image: payload.images[0] || "",
     images: payload.images,
     updatedAt: new Date().toISOString(),
   };
@@ -108,6 +130,7 @@ async function request(path, options = {}) {
 }
 
 export async function getProducts() {
+  // Ambil semua data produk.
   const remote = await request("/products?offset=0&limit=200");
   const overrides = readOverrides();
   const deletedIds = new Set(overrides.deleted);
@@ -116,16 +139,17 @@ export async function getProducts() {
     .filter((product) => !deletedIds.has(product.id))
     .map((product) => applyUpdate(product, overrides));
 
-  return [...overrides.created, ...merged];
+  return [...overrides.created, ...merged].map(normalizeProduct);
 }
 
 export async function getProductById(id) {
   const overrides = readOverrides();
 
   if (isLocalId(id)) {
+    // Cari produk berdasarkan id.
     const local = overrides.created.find((product) => product.id === id);
     if (!local) throw new Error("Product not found");
-    return local;
+    return normalizeProduct(local);
   }
 
   const numericId = Number(id);
@@ -133,8 +157,9 @@ export async function getProductById(id) {
     throw new Error("Product not found");
   }
 
+  // Cari produk berdasarkan id.
   const remote = await request(`/products/${id}`);
-  return applyUpdate(remote, overrides);
+  return normalizeProduct(applyUpdate(remote, overrides));
 }
 
 export async function getCategories() {

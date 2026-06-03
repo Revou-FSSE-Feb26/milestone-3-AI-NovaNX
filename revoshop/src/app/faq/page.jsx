@@ -186,6 +186,7 @@ export default function FAQPage() {
   };
 
   return (
+    // Tampilkan halaman static: /faq.
     <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
       <section className="mx-auto max-w-7xl">
         <Card className="grid gap-0 bg-background shadow-sm lg:grid-cols-[1.25fr_0.75fr]">

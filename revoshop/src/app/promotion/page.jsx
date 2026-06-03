@@ -323,6 +323,7 @@ function PromotionCard({ promotion }) {
 
 export default function PromotionPage() {
   return (
+    // Tampilkan halaman static: /promotion.
     <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
       <section className="mx-auto max-w-7xl">
         <Card className="grid gap-0 border-border/80 bg-background shadow-sm md:grid-cols-[1.35fr_0.65fr]">

@@ -6,11 +6,12 @@ import { Check, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cleanImageUrl } from "@/lib/utils";
-import { readCartItems, writeCartItems } from "@/lib/cart";
+import { normalizeCartCategory, readCartItems, writeCartItems } from "@/lib/cart";
 
 const ADDED_FEEDBACK_DURATION_MS = 2000;
 
 export default function AddToCartButton({ product }) {
+  // Jika tombol Add to Cart diklik: ubah state cart/message.
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
@@ -44,10 +45,10 @@ export default function AddToCartButton({ product }) {
           ...cartItems,
           {
             id: product.id,
-            title: product.title,
+            title: product.name || product.title,
             price: product.price,
-            category: product.category?.name || "Product",
-            image: cleanImageUrl(product.images?.[0]),
+            category: normalizeCartCategory(product.category?.name),
+            image: cleanImageUrl(product.image || product.images?.[0]),
             quantity: 1,
           },
         ];
@@ -64,6 +65,7 @@ export default function AddToCartButton({ product }) {
       </Button>
 
       {added && (
+        // Tampilkan pesan "Product added to cart".
         <Badge className="mt-3 gap-1.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
           <Check aria-hidden="true" className="size-3.5" />
           Product added to cart.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   AlertTriangle,
@@ -218,10 +218,12 @@ export default function AdminPage() {
     deleted: 0,
   });
 
-  const refreshOverridesSummary = () =>
-    setOverridesSummary(getOverridesSummary());
+  const refreshOverridesSummary = useCallback(
+    () => setOverridesSummary(getOverridesSummary()),
+    [],
+  );
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -237,18 +239,18 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [refreshOverridesSummary]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    queueMicrotask(loadData);
+  }, [loadData]);
 
   useEffect(() => {
-    refreshOverridesSummary();
     const handler = () => refreshOverridesSummary();
+    queueMicrotask(handler);
     window.addEventListener(PRODUCTS_UPDATED_EVENT, handler);
     return () => window.removeEventListener(PRODUCTS_UPDATED_EVENT, handler);
-  }, []);
+  }, [refreshOverridesSummary]);
 
   const handleResetOverrides = async () => {
     clearLocalOverrides();

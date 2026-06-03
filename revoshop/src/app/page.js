@@ -18,6 +18,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 function HomeContent() {
+  
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search")?.toLowerCase().trim() || "";
 
@@ -65,6 +66,7 @@ function HomeContent() {
   useEffect(() => {
     async function loadProducts() {
       try {
+        // Ambil semua data produk.
         const data = await getProducts();
         setProducts(data);
       } catch (err) {
@@ -86,6 +88,7 @@ function HomeContent() {
   }
 
   return (
+    // Tampilkan Home Page.
     <main className="min-h-screen bg-muted/30 px-4 py-8 sm:px-6 lg:px-8">
       <section className="mx-auto max-w-7xl">
         <div className="mb-8">
@@ -181,7 +184,9 @@ function HomeContent() {
 
             {filteredProducts.length > 0 ? (
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {/* Untuk setiap produk. */}
                 {filteredProducts.map((product, index) => (
+                  // Tampilkan image, nama produk, harga, dan tombol/link "View Detail".
                   <ProductCard
                     key={product.id}
                     product={product}
@@ -214,6 +219,7 @@ function HomeContent() {
 
 export default function HomePage() {
   return (
+    // Tampilkan Home Page.
     <Suspense fallback={<p className="p-8">Loading products...</p>}>
       <HomeContent />
     </Suspense>

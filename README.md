@@ -7,7 +7,7 @@ It demonstrates the Next.js App Router, file‑based routing, dynamic routes,
 client‑side navigation, component composition, and React state management
 through a small but realistic shopping experience.
 
-> Live Demo: _add your Vercel URL here_
+> Live Demo: https://revoshop.ai-novanx.online/
 > Source Code: <https://github.com/Revou-FSSE-Feb26/milestone-3-AI-NovaNX>
 
 ---

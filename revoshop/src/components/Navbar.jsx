@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, Search, ShoppingCart, Tag } from "lucide-react";
 
@@ -31,23 +31,32 @@ const navLinks = [
   { href: "/admin", label: "Admin" },
 ];
 
+function subscribeToCartItemCount(callback) {
+  window.addEventListener(CART_UPDATED_EVENT, callback);
+  window.addEventListener("storage", callback);
+
+  return () => {
+    window.removeEventListener(CART_UPDATED_EVENT, callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
+function getCartItemCountSnapshot() {
+  return getCartItemCount();
+}
+
+function getCartItemCountServerSnapshot() {
+  return 0;
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [cartItemCount, setCartItemCount] = useState(0);
-
-  useEffect(() => {
-    const updateCartItemCount = () => setCartItemCount(getCartItemCount());
-
-    updateCartItemCount();
-    window.addEventListener(CART_UPDATED_EVENT, updateCartItemCount);
-    window.addEventListener("storage", updateCartItemCount);
-
-    return () => {
-      window.removeEventListener(CART_UPDATED_EVENT, updateCartItemCount);
-      window.removeEventListener("storage", updateCartItemCount);
-    };
-  }, []);
+  const cartItemCount = useSyncExternalStore(
+    subscribeToCartItemCount,
+    getCartItemCountSnapshot,
+    getCartItemCountServerSnapshot,
+  );
 
   const isActive = (href) => {
     if (href === "/") {
@@ -97,6 +106,7 @@ export default function Navbar() {
           ))}
         </div>
 
+          {/* form search untuk desktop. */}
         <form
           onSubmit={handleSearch}
           className="mx-2 hidden max-w-sm flex-1 md:block lg:mx-6"
@@ -152,6 +162,7 @@ export default function Navbar() {
           </Button>
         </div>
 
+        {/* Drawer untuk Mobile menu */}
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="ml-auto md:hidden">
@@ -176,6 +187,7 @@ export default function Navbar() {
             </SheetHeader>
 
             <div className="px-4">
+              {/* The search form is duplicated here for mobile menu. */}
               <form onSubmit={handleSearch} className="relative">
                 <Search
                   aria-hidden="true"
