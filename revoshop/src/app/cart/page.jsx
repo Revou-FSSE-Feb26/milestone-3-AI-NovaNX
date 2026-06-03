@@ -52,7 +52,7 @@ import {
   isVoucherCategoryEligible,
 } from "@/lib/cart";
 
-const FREE_SHIPPING_THRESHOLD = 75000;
+const FREE_SHIPPING_THRESHOLD = 750;
 const EMPTY_CART_SNAPSHOT = JSON.stringify({
   cartItems: [],
   selectedProductVoucher: null,

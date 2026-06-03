@@ -126,9 +126,9 @@ const promotions = [
     applicableCategories: ["All"],
     restrictionNote:
       "This voucher only applies to shipping benefits and can be combined with one eligible product category voucher in the same purchase.",
-    description: "Unlock delivery savings for checkout totals above $75000.",
-    minimumSpend: "$75000",
-    minimumSpendValue: 75000,
+    description: "Unlock delivery savings for checkout totals above $750.",
+    minimumSpend: "$750",
+    minimumSpendValue: 750,
     endsIn: "1d 09h",
     claimed: 86,
     tone: "border-orange-200 bg-orange-50 text-orange-700",
@@ -151,7 +151,7 @@ const promotionTabs = [
 const benefits = [
   {
     title: "Free Shipping",
-    description: "Available for orders over $75000.",
+    description: "Available for orders over $750.",
     icon: Truck,
   },
   {
