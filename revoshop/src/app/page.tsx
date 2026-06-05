@@ -18,19 +18,44 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { readAuthSession } from "@/lib/auth";
 
+type ProductCategory = {
+  id?: number | string;
+  name?: string;
+  image?: string;
+};
+
+type Product = {
+  id: number | string;
+  title?: string;
+  name?: string;
+  description?: string;
+  category?: ProductCategory | null;
+  image?: string;
+  images?: string[];
+  price?: number;
+};
+
+type CategoryFilter = {
+  name: string;
+  count: number;
+};
+
+function isProductArray(data: unknown): data is Product[] {
+  return Array.isArray(data);
+}
+
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search")?.toLowerCase().trim() || "";
 
-  const [authChecked, setAuthChecked] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
 
-  const categories = useMemo(() => {
-    const categoryMap = new Map();
+  const categories = useMemo<CategoryFilter[]>(() => {
+    const categoryMap = new Map<string, number>();
 
     for (const product of products) {
       const categoryName = product.category?.name || "Uncategorized";
@@ -66,7 +91,7 @@ function HomeContent() {
   }, [products, searchQuery, selectedCategory]);
 
   useEffect(() => {
-    queueMicrotask(() => {
+    async function initializePage() {
       const session = readAuthSession();
 
       if (!session) {
@@ -74,31 +99,21 @@ function HomeContent() {
         return;
       }
 
-      setAuthChecked(true);
-    });
-  }, [router]);
-
-  useEffect(() => {
-    if (!authChecked) {
-      return;
-    }
-
-    async function loadProducts() {
       try {
         // Ambil semua data produk.
         const data = await getProducts();
-        setProducts(data);
+        setProducts(isProductArray(data) ? data : []);
       } catch (err) {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Failed to load products");
       } finally {
         setLoading(false);
       }
     }
 
-    loadProducts();
-  }, [authChecked]);
+    initializePage();
+  }, [router]);
 
-  if (!authChecked || loading) {
+  if (loading) {
     return <p className="p-8">Loading products...</p>;
   }
 
@@ -126,7 +141,7 @@ function HomeContent() {
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <Card className="bg-background shadow-sm">
-              <CardHeader>
+              <CardHeader className="">
                 <Badge
                   variant="outline"
                   className="mb-2 w-fit gap-1.5 bg-muted/60"
@@ -134,8 +149,8 @@ function HomeContent() {
                   <Filter aria-hidden="true" className="size-3.5" />
                   Filter
                 </Badge>
-                <CardTitle>Categories</CardTitle>
-                <CardDescription>
+                <CardTitle className="">Categories</CardTitle>
+                <CardDescription className="">
                   Choose a category to refine the product list.
                 </CardDescription>
               </CardHeader>
@@ -194,6 +209,7 @@ function HomeContent() {
               {selectedCategory !== "all" && (
                 <Button
                   variant="outline"
+                  className=""
                   onClick={() => setSelectedCategory("all")}
                 >
                   Reset Filter
