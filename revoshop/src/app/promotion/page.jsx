@@ -10,8 +10,8 @@ import {
   ShoppingBag,
   Ticket,
   Truck,
-  Zap,
-} from "lucide-react";
+  Zap } from
+"lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,8 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from
+"@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -33,147 +33,147 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  SheetTrigger } from
+"@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   PRODUCT_VOUCHER_STORAGE_KEY,
   SHIPPING_VOUCHER_STORAGE_KEY,
-  VOUCHER_UPDATED_EVENT,
-} from "@/lib/cart";
+  VOUCHER_UPDATED_EVENT } from
+"@/lib/cart";
 
 const promotions = [
-  {
-    category: "fashion",
-    title: "Payday Sale",
-    discount: "Up to 45% off",
-    code: "PAYDAY45",
-    discountType: "percentage",
-    discountValue: 45,
-    maxDiscount: 40,
-    applicableCategories: ["Clothes", "Shoes"],
-    restrictionNote:
-      "This voucher only applies to Clothes and Shoes products. It cannot be used together with purchases from other product categories, but it can be combined with Free Shipping when eligible.",
-    description:
-      "Selected fashion, shoes, and daily essentials for a limited time.",
-    minimumSpend: "$50",
-    minimumSpendValue: 50,
-    endsIn: "18h 24m",
-    claimed: 72,
-    tone: "border-rose-200 bg-rose-50 text-rose-700",
-    terms: [
-      "Valid for selected clothes and shoes.",
-      "Can be combined with free shipping voucher.",
-      "One use per customer during the campaign.",
-    ],
-  },
-  {
-    category: "tech",
-    title: "Tech Deals",
-    discount: "Save up to 30%",
-    code: "TECH30",
-    discountType: "percentage",
-    discountValue: 30,
-    maxDiscount: 60,
-    applicableCategories: ["Electronics"],
-    restrictionNote:
-      "This voucher only applies to Electronics products. It cannot be used together with purchases from other product categories, but it can be combined with Free Shipping when eligible.",
-    description:
-      "Upgrade your electronics setup with special prices this week.",
-    minimumSpend: "$120",
-    minimumSpendValue: 120,
-    endsIn: "2d 06h",
-    claimed: 58,
-    tone: "border-sky-200 bg-sky-50 text-sky-700",
-    terms: [
-      "Available for electronics category only.",
-      "Discount applies before shipping cost.",
-      "Limited quota refreshed every morning.",
-    ],
-  },
-  {
-    category: "home",
-    title: "Home Refresh",
-    discount: "Buy 2 Save up to 20%",
-    code: "HOME20",
-    discountType: "percentage",
-    discountValue: 20,
-    maxDiscount: 35,
-    applicableCategories: ["Furniture"],
-    restrictionNote:
-      "This voucher only applies to Furniture products. It cannot be used together with purchases from other product categories, but it can be combined with Free Shipping when eligible.",
-    description:
-      "Refresh your space with furniture and home picks from RevoShop.",
-    minimumSpend: "$80",
-    minimumSpendValue: 80,
-    endsIn: "3d 12h",
-    claimed: 41,
-    tone: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    terms: [
-      "Applies to furniture and home products.",
-      "Minimum two eligible products required.",
-      "Voucher cannot be exchanged for cash.",
-    ],
-  },
-  {
-    category: "shipping",
-    title: "Shipping Boost",
-    discount: "Free shipping",
-    code: "SHIPFREE",
-    discountType: "free-shipping",
-    discountValue: 100,
-    maxDiscount: 8,
-    applicableCategories: ["All"],
-    restrictionNote:
-      "This voucher only applies to shipping benefits and can be combined with one eligible product category voucher in the same purchase.",
-    description: "Unlock delivery savings for checkout totals above $750.",
-    minimumSpend: "$750",
-    minimumSpendValue: 750,
-    endsIn: "1d 09h",
-    claimed: 86,
-    tone: "border-orange-200 bg-orange-50 text-orange-700",
-    terms: [
-      "Valid for standard delivery only.",
-      "Automatically applied after voucher claim.",
-      "Coverage depends on delivery area availability.",
-    ],
-  },
-];
+{
+  category: "fashion",
+  title: "Payday Sale",
+  discount: "Up to 45% off",
+  code: "PAYDAY45",
+  discountType: "percentage",
+  discountValue: 45,
+  maxDiscount: 40,
+  applicableCategories: ["Clothes", "Shoes"],
+  restrictionNote:
+  "This voucher only applies to Clothes and Shoes products. It cannot be used together with purchases from other product categories, but it can be combined with Free Shipping when eligible.",
+  description:
+  "Selected fashion, shoes, and daily essentials for a limited time.",
+  minimumSpend: "$50",
+  minimumSpendValue: 50,
+  endsIn: "18h 24m",
+  claimed: 72,
+  tone: "border-rose-200 bg-rose-50 text-rose-700",
+  terms: [
+  "Valid for selected clothes and shoes.",
+  "Can be combined with free shipping voucher.",
+  "One use per customer during the campaign."]
+
+},
+{
+  category: "tech",
+  title: "Tech Deals",
+  discount: "Save up to 30%",
+  code: "TECH30",
+  discountType: "percentage",
+  discountValue: 30,
+  maxDiscount: 60,
+  applicableCategories: ["Electronics", "Laptops", "Tablets", "Smartphones"],
+  restrictionNote:
+  "This voucher only applies to Electronics/Tech products. It cannot be used together with purchases from other product categories, but it can be combined with Free Shipping when eligible.",
+  description:
+  "Upgrade your electronics/tech setup with special prices this week.",
+  minimumSpend: "$500",
+  minimumSpendValue: 500,
+  endsIn: "2d 06h",
+  claimed: 58,
+  tone: "border-sky-200 bg-sky-50 text-sky-700",
+  terms: [
+  "Available for electronics/tech category only.",
+  "Discount applies before shipping cost.",
+  "Limited quota refreshed every morning."]
+
+},
+{
+  category: "home",
+  title: "Home Refresh",
+  discount: "Buy 2 Save up to 20%",
+  code: "HOME20",
+  discountType: "percentage",
+  discountValue: 20,
+  maxDiscount: 35,
+  applicableCategories: ["Furniture"],
+  restrictionNote:
+  "This voucher only applies to Furniture products. It cannot be used together with purchases from other product categories, but it can be combined with Free Shipping when eligible.",
+  description:
+  "Refresh your space with furniture and home picks from RevoShop.",
+  minimumSpend: "$80",
+  minimumSpendValue: 80,
+  endsIn: "3d 12h",
+  claimed: 41,
+  tone: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  terms: [
+  "Applies to furniture and home products.",
+  "Minimum two eligible products required.",
+  "Voucher cannot be exchanged for cash."]
+
+},
+{
+  category: "shipping",
+  title: "Shipping Boost",
+  discount: "Free shipping",
+  code: "SHIPFREE",
+  discountType: "free-shipping",
+  discountValue: 100,
+  maxDiscount: 8,
+  applicableCategories: ["All"],
+  restrictionNote:
+  "This voucher only applies to shipping benefits and can be combined with one eligible product category voucher in the same purchase.",
+  description: "Unlock delivery savings for checkout totals above $750.",
+  minimumSpend: "$750",
+  minimumSpendValue: 750,
+  endsIn: "1d 09h",
+  claimed: 86,
+  tone: "border-orange-200 bg-orange-50 text-orange-700",
+  terms: [
+  "Valid for standard delivery only.",
+  "Automatically applied after voucher claim.",
+  "Coverage depends on delivery area availability."]
+
+}];
+
 
 const promotionTabs = [
-  { label: "All", value: "all" },
-  { label: "Fashion", value: "fashion" },
-  { label: "Tech", value: "tech" },
-  { label: "Home", value: "home" },
-  { label: "Shipping", value: "shipping" },
-];
+{ label: "All", value: "all" },
+{ label: "Fashion", value: "fashion" },
+{ label: "Tech", value: "tech" },
+{ label: "Home", value: "home" },
+{ label: "Shipping", value: "shipping" }];
+
 
 const benefits = [
-  {
-    title: "Free Shipping",
-    description: "Available for orders over $750.",
-    icon: Truck,
-  },
-  {
-    title: "First Checkout Bonus",
-    description: "Extra voucher for new buyers.",
-    icon: Gift,
-  },
-  {
-    title: "Weekly Bundles",
-    description: "Limited bundles refreshed every week.",
-    icon: ShoppingBag,
-  },
-];
+{
+  title: "Free Shipping",
+  description: "Available for orders over $750.",
+  icon: Truck
+},
+{
+  title: "First Checkout Bonus",
+  description: "Extra voucher for new buyers.",
+  icon: Gift
+},
+{
+  title: "Weekly Bundles",
+  description: "Limited bundles refreshed every week.",
+  icon: ShoppingBag
+}];
+
 
 function PromotionGrid({ items }) {
   return (
     <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-      {items.map((promotion) => (
-        <PromotionCard key={promotion.code} promotion={promotion} />
-      ))}
-    </div>
-  );
+      {items.map((promotion) =>
+      <PromotionCard key={promotion.code} promotion={promotion} />
+      )}
+    </div>);
+
 }
 
 function PromotionCard({ promotion }) {
@@ -181,9 +181,9 @@ function PromotionCard({ promotion }) {
 
   const handleClaimVoucher = () => {
     const storageKey =
-      promotion.discountType === "free-shipping"
-        ? SHIPPING_VOUCHER_STORAGE_KEY
-        : PRODUCT_VOUCHER_STORAGE_KEY;
+    promotion.discountType === "free-shipping" ?
+    SHIPPING_VOUCHER_STORAGE_KEY :
+    PRODUCT_VOUCHER_STORAGE_KEY;
 
     localStorage.setItem(storageKey, JSON.stringify(promotion));
     window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
@@ -252,8 +252,8 @@ function PromotionCard({ promotion }) {
               <SheetHeader>
                 <Badge
                   variant="outline"
-                  className={`mb-3 w-fit ${promotion.tone}`}
-                >
+                  className={`mb-3 w-fit ${promotion.tone}`}>
+                  
                   {promotion.code}
                 </Badge>
                 <SheetTitle>{promotion.title}</SheetTitle>
@@ -287,15 +287,15 @@ function PromotionCard({ promotion }) {
                 <div className="py-4">
                   <p className="font-semibold">Terms and conditions</p>
                   <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                    {promotion.terms.map((term) => (
-                      <li key={term} className="flex gap-2">
+                    {promotion.terms.map((term) =>
+                    <li key={term} className="flex gap-2">
                         <ShieldCheck
-                          aria-hidden="true"
-                          className="mt-0.5 size-4 shrink-0 text-emerald-600"
-                        />
+                        aria-hidden="true"
+                        className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                      
                         <span>{term}</span>
                       </li>
-                    ))}
+                    )}
                   </ul>
                 </div>
               </div>
@@ -317,13 +317,13 @@ function PromotionCard({ promotion }) {
           </Button>
         </div>
       </CardFooter>
-    </Card>
-  );
+    </Card>);
+
 }
 
 export default function PromotionPage() {
   return (
-    // Tampilkan halaman static: /promotion.
+
     <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
       <section className="mx-auto max-w-7xl">
         <Card className="grid gap-0 border-border/80 bg-background shadow-sm md:grid-cols-[1.35fr_0.65fr]">
@@ -375,12 +375,12 @@ export default function PromotionPage() {
         </Card>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          {benefits.map((benefit) => (
-            <Card
-              key={benefit.title}
-              size="sm"
-              className="bg-background shadow-sm"
-            >
+          {benefits.map((benefit) =>
+          <Card
+            key={benefit.title}
+            size="sm"
+            className="bg-background shadow-sm">
+            
               <CardContent className="flex items-start gap-3">
                 <div className="rounded-lg bg-primary/10 p-2 text-primary">
                   <benefit.icon aria-hidden="true" className="size-4" />
@@ -393,7 +393,7 @@ export default function PromotionPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )}
         </div>
 
         <section id="active-promotions" className="mt-10">
@@ -411,32 +411,32 @@ export default function PromotionPage() {
 
           <Tabs defaultValue="all" className="gap-5">
             <TabsList className="grid h-auto w-full grid-cols-2 gap-1 group-data-horizontal/tabs:h-auto sm:inline-flex sm:w-fit sm:grid-cols-none">
-              {promotionTabs.map((tab) => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className="h-9 px-3"
-                >
+              {promotionTabs.map((tab) =>
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="h-9 px-3">
+                
                   {tab.label}
                 </TabsTrigger>
-              ))}
+              )}
             </TabsList>
 
             <TabsContent value="all">
               <PromotionGrid items={promotions} />
             </TabsContent>
-            {promotionTabs.slice(1).map((tab) => (
-              <TabsContent key={tab.value} value={tab.value}>
+            {promotionTabs.slice(1).map((tab) =>
+            <TabsContent key={tab.value} value={tab.value}>
                 <PromotionGrid
-                  items={promotions.filter(
-                    (promotion) => promotion.category === tab.value,
-                  )}
-                />
+                items={promotions.filter(
+                  (promotion) => promotion.category === tab.value
+                )} />
+              
               </TabsContent>
-            ))}
+            )}
           </Tabs>
         </section>
       </section>
-    </main>
-  );
+    </main>);
+
 }

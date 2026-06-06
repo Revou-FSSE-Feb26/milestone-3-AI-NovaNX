@@ -11,22 +11,22 @@ import {
   ShoppingBag,
   Sparkles,
   Store,
-  Users,
-} from "lucide-react";
+  Users } from
+"lucide-react";
 
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  AccordionTrigger } from
+"@/components/ui/accordion";
 import {
   Avatar,
   AvatarBadge,
   AvatarFallback,
   AvatarGroup,
-  AvatarGroupCount,
-} from "@/components/ui/avatar";
+  AvatarGroupCount } from
+"@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,8 +35,8 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from
+"@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -47,64 +47,64 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  SheetTrigger } from
+"@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const metrics = [
-  { label: "Product categories", value: "6+", icon: Boxes },
-  { label: "Responsive pages", value: "5", icon: Code2 },
-  { label: "Support coverage", value: "92%", icon: HeartHandshake },
-];
+{ label: "Product categories", value: "6+", icon: Boxes },
+{ label: "Responsive pages", value: "5", icon: Code2 },
+{ label: "Support coverage", value: "92%", icon: HeartHandshake }];
+
 
 const values = [
-  {
-    title: "Fast discovery",
-    description:
-      "Products, promos, and FAQ content are structured for quick browsing.",
-    icon: Rocket,
-  },
-  {
-    title: "Trust-first shopping",
-    description:
-      "Details, shipping notes, and support flows reduce checkout uncertainty.",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Reusable design",
-    description:
-      "Reusable components and polished states show frontend product thinking.",
-    icon: Sparkles,
-  },
-];
+{
+  title: "Fast discovery",
+  description:
+  "Products, promos, and FAQ content are structured for quick browsing.",
+  icon: Rocket
+},
+{
+  title: "Trust-first shopping",
+  description:
+  "Details, shipping notes, and support flows reduce checkout uncertainty.",
+  icon: ShieldCheck
+},
+{
+  title: "Reusable design",
+  description:
+  "Reusable components and polished states show frontend product thinking.",
+  icon: Sparkles
+}];
+
 
 const timeline = [
-  {
-    title: "Project setup",
-    description: "Next.js, Bun, TailwindCSS, and shadcn/ui foundation.",
-  },
-  {
-    title: "Catalog experience",
-    description: "Product list, detail route, cards, API fetching, and search.",
-  },
-  {
-    title: "Marketplace polish",
-    description: "Promotion, FAQ, navigation, and responsive interactions.",
-  },
-];
+{
+  title: "Project setup",
+  description: "Next.js, Bun, TailwindCSS, and shadcn/ui foundation."
+},
+{
+  title: "Catalog experience",
+  description: "Product list, detail route, cards, API fetching, and search."
+},
+{
+  title: "Marketplace polish",
+  description: "Promotion, FAQ, navigation, and responsive interactions."
+}];
+
 
 const stack = [
-  "Next.js",
-  "React",
-  "Bun",
-  "TailwindCSS",
-  "shadcn/ui",
-  "Platzi API",
-];
+"Next.js",
+"React",
+"Bun",
+"TailwindCSS",
+"shadcn/ui",
+"Platzi API"];
+
 
 export default function AboutPage() {
   return (
-    // Tampilkan halaman static: /about atau /contact.
+
     <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
       <section className="mx-auto max-w-7xl">
         <Card className="grid gap-0 bg-background shadow-sm lg:grid-cols-[1.25fr_0.75fr]">
@@ -150,8 +150,8 @@ export default function AboutPage() {
                     <div className="px-4">
                       <Separator />
                       <div className="space-y-4 py-4">
-                        {timeline.map((item, index) => (
-                          <div key={item.title} className="flex gap-3">
+                        {timeline.map((item, index) =>
+                        <div key={item.title} className="flex gap-3">
                             <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                               {index + 1}
                             </div>
@@ -162,7 +162,7 @@ export default function AboutPage() {
                               </p>
                             </div>
                           </div>
-                        ))}
+                        )}
                       </div>
                       <Separator />
                     </div>
@@ -239,8 +239,8 @@ export default function AboutPage() {
               <Card
                 key={metric.label}
                 size="sm"
-                className="bg-background shadow-sm"
-              >
+                className="bg-background shadow-sm">
+                
                 <CardContent className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-3xl font-bold">{metric.value}</p>
@@ -252,8 +252,8 @@ export default function AboutPage() {
                     <Icon aria-hidden="true" className="size-5" />
                   </div>
                 </CardContent>
-              </Card>
-            );
+              </Card>);
+
           })}
         </div>
 
@@ -307,8 +307,8 @@ export default function AboutPage() {
                         <CardTitle>{value.title}</CardTitle>
                         <CardDescription>{value.description}</CardDescription>
                       </CardHeader>
-                    </Card>
-                  );
+                    </Card>);
+
                 })}
               </div>
             </TabsContent>
@@ -322,11 +322,11 @@ export default function AboutPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
-                  {stack.map((tool) => (
-                    <Badge key={tool} variant="outline" className="bg-muted/60">
+                  {stack.map((tool) =>
+                  <Badge key={tool} variant="outline" className="bg-muted/60">
                       {tool}
                     </Badge>
-                  ))}
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -335,8 +335,8 @@ export default function AboutPage() {
               <Card className="bg-background shadow-sm">
                 <CardContent>
                   <Accordion type="single" collapsible>
-                    {timeline.map((item) => (
-                      <AccordionItem key={item.title} value={item.title}>
+                    {timeline.map((item) =>
+                    <AccordionItem key={item.title} value={item.title}>
                         <AccordionTrigger className="text-base">
                           {item.title}
                         </AccordionTrigger>
@@ -344,7 +344,7 @@ export default function AboutPage() {
                           {item.description}
                         </AccordionContent>
                       </AccordionItem>
-                    ))}
+                    )}
                   </Accordion>
                 </CardContent>
               </Card>
@@ -357,8 +357,8 @@ export default function AboutPage() {
             <Badge variant="outline" className="mb-2 w-fit bg-muted/60">
               <ChartNoAxesColumnIncreasing
                 aria-hidden="true"
-                className="size-3.5"
-              />
+                className="size-3.5" />
+              
               Project momentum
             </Badge>
             <CardTitle>
@@ -385,6 +385,6 @@ export default function AboutPage() {
           </CardFooter>
         </Card>
       </section>
-    </main>
-  );
+    </main>);
+
 }

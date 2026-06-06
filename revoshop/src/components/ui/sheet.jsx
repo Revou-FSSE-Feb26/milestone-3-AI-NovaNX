@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Dialog as SheetPrimitive } from "radix-ui"
+import * as React from "react";
+import { Dialog as SheetPrimitive } from "radix-ui";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { XIcon } from "lucide-react"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { XIcon } from "lucide-react";
 
 function Sheet({
   ...props
@@ -42,8 +42,8 @@ function SheetOverlay({
         "fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
-      {...props} />
-  );
+      {...props} />);
+
 }
 
 function SheetContent({
@@ -65,17 +65,17 @@ function SheetContent({
         )}
         {...props}>
         {children}
-        {showCloseButton && (
-          <SheetPrimitive.Close data-slot="sheet-close" asChild>
+        {showCloseButton &&
+        <SheetPrimitive.Close data-slot="sheet-close" asChild>
             <Button variant="ghost" className="absolute top-3 right-3" size="icon-sm">
               <XIcon />
               <span className="sr-only">Close</span>
             </Button>
           </SheetPrimitive.Close>
-        )}
+        }
       </SheetPrimitive.Content>
-    </SheetPortal>
-  );
+    </SheetPortal>);
+
 }
 
 function SheetHeader({
@@ -86,8 +86,8 @@ function SheetHeader({
     <div
       data-slot="sheet-header"
       className={cn("flex flex-col gap-0.5 p-4", className)}
-      {...props} />
-  );
+      {...props} />);
+
 }
 
 function SheetFooter({
@@ -98,8 +98,8 @@ function SheetFooter({
     <div
       data-slot="sheet-footer"
       className={cn("mt-auto flex flex-col gap-2 p-4", className)}
-      {...props} />
-  );
+      {...props} />);
+
 }
 
 function SheetTitle({
@@ -110,8 +110,8 @@ function SheetTitle({
     <SheetPrimitive.Title
       data-slot="sheet-title"
       className={cn("font-heading text-base font-medium text-foreground", className)}
-      {...props} />
-  );
+      {...props} />);
+
 }
 
 function SheetDescription({
@@ -122,8 +122,8 @@ function SheetDescription({
     <SheetPrimitive.Description
       data-slot="sheet-description"
       className={cn("text-sm text-muted-foreground", className)}
-      {...props} />
-  );
+      {...props} />);
+
 }
 
 export {
@@ -134,5 +134,4 @@ export {
   SheetHeader,
   SheetFooter,
   SheetTitle,
-  SheetDescription,
-}
+  SheetDescription };

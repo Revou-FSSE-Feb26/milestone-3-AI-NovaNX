@@ -13,10 +13,11 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from
+"@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { readAuthSession } from "@/lib/auth";
+
 
 type ProductCategory = {
   id?: number | string;
@@ -40,9 +41,11 @@ type CategoryFilter = {
   count: number;
 };
 
+
 function isProductArray(data: unknown): data is Product[] {
   return Array.isArray(data);
 }
+
 
 function HomeContent() {
   const router = useRouter();
@@ -64,7 +67,7 @@ function HomeContent() {
 
     return Array.from(categoryMap, ([name, count]) => ({ name, count })).sort(
       (firstCategory, secondCategory) =>
-        firstCategory.name.localeCompare(secondCategory.name),
+      firstCategory.name.localeCompare(secondCategory.name)
     );
   }, [products]);
 
@@ -72,19 +75,19 @@ function HomeContent() {
     return products.filter((product) => {
       const categoryName = product.category?.name || "Uncategorized";
       const matchesCategory =
-        selectedCategory === "all" || categoryName === selectedCategory;
+      selectedCategory === "all" || categoryName === selectedCategory;
 
       const searchableText = [
-        product.title,
-        product.description,
-        product.category?.name,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+      product.title,
+      product.description,
+      product.category?.name].
+
+      filter(Boolean).
+      join(" ").
+      toLowerCase();
 
       const matchesSearch =
-        !searchQuery || searchableText.includes(searchQuery);
+      !searchQuery || searchableText.includes(searchQuery);
 
       return matchesCategory && matchesSearch;
     });
@@ -100,7 +103,7 @@ function HomeContent() {
       }
 
       try {
-        // Ambil semua data produk.
+
         const data = await getProducts();
         setProducts(isProductArray(data) ? data : []);
       } catch (err) {
@@ -122,7 +125,7 @@ function HomeContent() {
   }
 
   return (
-    // Tampilkan Home Page.
+
     <main className="min-h-screen bg-muted/30 px-4 py-8 sm:px-6 lg:px-8">
       <section className="mx-auto max-w-7xl">
         <div className="mb-8">
@@ -132,9 +135,9 @@ function HomeContent() {
           </Badge>
           <h1 className="text-3xl font-bold">Our Catalog</h1>
           <p className="mt-2 text-muted-foreground">
-            {searchQuery
-              ? `Search results for "${searchParams.get("search")}"`
-              : "Browse our latest products"}
+            {searchQuery ?
+            `Search results for "${searchParams.get("search")}"` :
+            "Browse our latest products"}
           </p>
         </div>
 
@@ -144,8 +147,8 @@ function HomeContent() {
               <CardHeader className="">
                 <Badge
                   variant="outline"
-                  className="mb-2 w-fit gap-1.5 bg-muted/60"
-                >
+                  className="mb-2 w-fit gap-1.5 bg-muted/60">
+                  
                   <Filter aria-hidden="true" className="size-3.5" />
                   Filter
                 </Badge>
@@ -159,8 +162,8 @@ function HomeContent() {
                 <Button
                   variant={selectedCategory === "all" ? "secondary" : "ghost"}
                   className="w-full justify-between"
-                  onClick={() => setSelectedCategory("all")}
-                >
+                  onClick={() => setSelectedCategory("all")}>
+                  
                   <span>All Products</span>
                   <Badge variant="outline" className="bg-background">
                     {products.length}
@@ -170,23 +173,23 @@ function HomeContent() {
                 <Separator className="my-3" />
 
                 <div className="grid gap-1">
-                  {categories.map((category) => (
-                    <Button
-                      key={category.name}
-                      variant={
-                        selectedCategory === category.name
-                          ? "secondary"
-                          : "ghost"
-                      }
-                      className="w-full justify-between"
-                      onClick={() => setSelectedCategory(category.name)}
-                    >
+                  {categories.map((category) =>
+                  <Button
+                    key={category.name}
+                    variant={
+                    selectedCategory === category.name ?
+                    "secondary" :
+                    "ghost"
+                    }
+                    className="w-full justify-between"
+                    onClick={() => setSelectedCategory(category.name)}>
+                    
                       <span className="truncate">{category.name}</span>
                       <Badge variant="outline" className="bg-background">
                         {category.count}
                       </Badge>
                     </Button>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -196,9 +199,9 @@ function HomeContent() {
             <div className="mb-4 flex flex-col justify-between gap-3 rounded-lg border bg-background p-4 shadow-sm sm:flex-row sm:items-center">
               <div>
                 <p className="font-semibold">
-                  {selectedCategory === "all"
-                    ? "All Products"
-                    : selectedCategory}
+                  {selectedCategory === "all" ?
+                  "All Products" :
+                  selectedCategory}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Showing {filteredProducts.length} of {products.length}{" "}
@@ -206,36 +209,36 @@ function HomeContent() {
                 </p>
               </div>
 
-              {selectedCategory !== "all" && (
-                <Button
-                  variant="outline"
-                  className=""
-                  onClick={() => setSelectedCategory("all")}
-                >
+              {selectedCategory !== "all" &&
+              <Button
+                variant="outline"
+                className=""
+                onClick={() => setSelectedCategory("all")}>
+                
                   Reset Filter
                 </Button>
-              )}
+              }
             </div>
 
-            {filteredProducts.length > 0 ? (
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {/* Untuk setiap produk. */}
-                {filteredProducts.map((product, index) => (
-                  // Tampilkan image, nama produk, harga, dan tombol/link "View Detail".
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    priority={index < 3}
-                  />
-                ))}
-              </div>
-            ) : (
-              <Card className="bg-background text-center shadow-sm">
+            {filteredProducts.length > 0 ?
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {}
+                {filteredProducts.map((product, index) =>
+
+              <ProductCard
+                key={product.id}
+                product={product}
+                priority={index < 3} />
+
+              )}
+              </div> :
+
+            <Card className="bg-background text-center shadow-sm">
                 <CardContent className="py-10">
                   <PackageSearch
-                    aria-hidden="true"
-                    className="mx-auto size-10 text-muted-foreground"
-                  />
+                  aria-hidden="true"
+                  className="mx-auto size-10 text-muted-foreground" />
+                
                   <p className="mt-4 text-lg font-semibold">
                     No products found
                   </p>
@@ -244,19 +247,19 @@ function HomeContent() {
                   </p>
                 </CardContent>
               </Card>
-            )}
+            }
           </div>
         </div>
       </section>
-    </main>
-  );
+    </main>);
+
 }
 
 export default function HomePage() {
   return (
-    // Tampilkan Home Page.
-    <Suspense fallback={<p className="p-8">Loading products...</p>}>
+
+    <Suspense fallback={<p className="p-8">Loading products...</p>}> {}
       <HomeContent />
-    </Suspense>
-  );
+    </Suspense>);
+
 }

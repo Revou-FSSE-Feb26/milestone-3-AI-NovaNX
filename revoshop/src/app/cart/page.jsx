@@ -14,8 +14,8 @@ import {
   ShoppingBag,
   Trash2,
   Truck,
-  X,
-} from "lucide-react";
+  X } from
+"lucide-react";
 
 import {
   AlertDialog,
@@ -27,8 +27,8 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  AlertDialogTrigger } from
+"@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,8 +37,8 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from
+"@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
@@ -49,14 +49,14 @@ import {
   PRODUCT_VOUCHER_STORAGE_KEY,
   SHIPPING_VOUCHER_STORAGE_KEY,
   VOUCHER_UPDATED_EVENT,
-  isVoucherCategoryEligible,
-} from "@/lib/cart";
+  isVoucherCategoryEligible } from
+"@/lib/cart";
 
 const FREE_SHIPPING_THRESHOLD = 750;
 const EMPTY_CART_SNAPSHOT = JSON.stringify({
   cartItems: [],
   selectedProductVoucher: null,
-  selectedShippingVoucher: null,
+  selectedShippingVoucher: null
 });
 
 function getStoredCartItems() {
@@ -78,12 +78,12 @@ function getStoredVoucher(storageKey, expectedDiscountType) {
   }
 
   const legacyVoucher = JSON.parse(
-    localStorage.getItem(LEGACY_VOUCHER_STORAGE_KEY) || "null",
+    localStorage.getItem(LEGACY_VOUCHER_STORAGE_KEY) || "null"
   );
 
-  return legacyVoucher?.discountType === expectedDiscountType
-    ? legacyVoucher
-    : null;
+  return legacyVoucher?.discountType === expectedDiscountType ?
+  legacyVoucher :
+  null;
 }
 
 function getCartSnapshot() {
@@ -95,12 +95,12 @@ function getCartSnapshot() {
     cartItems: getStoredCartItems(),
     selectedProductVoucher: getStoredVoucher(
       PRODUCT_VOUCHER_STORAGE_KEY,
-      "percentage",
+      "percentage"
     ),
     selectedShippingVoucher: getStoredVoucher(
       SHIPPING_VOUCHER_STORAGE_KEY,
-      "free-shipping",
-    ),
+      "free-shipping"
+    )
   });
 }
 
@@ -126,13 +126,13 @@ function calculateProductVoucherDiscount(cartItems, voucher) {
       discount: 0,
       eligibleSubtotal: 0,
       status: "No voucher applied.",
-      isApplied: false,
+      isApplied: false
     };
   }
 
   const eligibleSubtotal = cartItems.reduce((total, item) => {
     const isEligible = voucher.applicableCategories?.some((category) =>
-      isVoucherCategoryEligible(item.category, category),
+    isVoucherCategoryEligible(item.category, category)
     );
     return isEligible ? total + item.price * item.quantity : total;
   }, 0);
@@ -142,7 +142,7 @@ function calculateProductVoucherDiscount(cartItems, voucher) {
       discount: 0,
       eligibleSubtotal,
       status: `Add ${formatCurrency(voucher.minimumSpendValue - eligibleSubtotal)} more eligible products to use ${voucher.code}.`,
-      isApplied: false,
+      isApplied: false
     };
   }
 
@@ -153,7 +153,7 @@ function calculateProductVoucherDiscount(cartItems, voucher) {
     discount,
     eligibleSubtotal,
     status: `${voucher.code} applied to eligible ${voucher.category} products.`,
-    isApplied: discount > 0,
+    isApplied: discount > 0
   };
 }
 
@@ -163,7 +163,7 @@ function calculateShippingVoucherDiscount(subtotal, voucher, shipping) {
       discount: 0,
       eligibleSubtotal: subtotal,
       status: "No shipping voucher applied.",
-      isApplied: false,
+      isApplied: false
     };
   }
 
@@ -172,7 +172,7 @@ function calculateShippingVoucherDiscount(subtotal, voucher, shipping) {
       discount: 0,
       eligibleSubtotal: subtotal,
       status: `Add ${formatCurrency(voucher.minimumSpendValue - subtotal)} more to use ${voucher.code}.`,
-      isApplied: false,
+      isApplied: false
     };
   }
 
@@ -180,7 +180,7 @@ function calculateShippingVoucherDiscount(subtotal, voucher, shipping) {
     discount: shipping,
     eligibleSubtotal: subtotal,
     status: "Shipping voucher discount applied",
-    isApplied: true,
+    isApplied: true
   };
 }
 
@@ -189,26 +189,26 @@ export default function CartPage() {
   const storedCartSnapshot = useSyncExternalStore(
     subscribeToCartStorage,
     getCartSnapshot,
-    () => EMPTY_CART_SNAPSHOT,
+    () => EMPTY_CART_SNAPSHOT
   );
   const { cartItems, selectedProductVoucher, selectedShippingVoucher } =
-    useMemo(() => JSON.parse(storedCartSnapshot), [storedCartSnapshot]);
+  useMemo(() => JSON.parse(storedCartSnapshot), [storedCartSnapshot]);
 
   const cartSummary = useMemo(() => {
     const subtotal = cartItems.reduce(
       (total, item) => total + item.price * item.quantity,
-      0,
+      0
     );
     const shipping =
-      subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : 8;
+    subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : 8;
     const productVoucherResult = calculateProductVoucherDiscount(
       cartItems,
-      selectedProductVoucher,
+      selectedProductVoucher
     );
     const shippingVoucherResult = calculateShippingVoucherDiscount(
       subtotal,
       selectedShippingVoucher,
-      shipping,
+      shipping
     );
     const productDiscount = productVoucherResult.discount;
     const shippingDiscount = shippingVoucherResult.discount;
@@ -216,11 +216,11 @@ export default function CartPage() {
     const total = subtotal + shipping - discount;
     const itemCount = cartItems.reduce(
       (total, item) => total + item.quantity,
-      0,
+      0
     );
     const shippingProgress = Math.min(
-      (subtotal / FREE_SHIPPING_THRESHOLD) * 100,
-      100,
+      subtotal / FREE_SHIPPING_THRESHOLD * 100,
+      100
     );
 
     return {
@@ -233,7 +233,7 @@ export default function CartPage() {
       productDiscount,
       shippingDiscount,
       productVoucherResult,
-      shippingVoucherResult,
+      shippingVoucherResult
     };
   }, [cartItems, selectedProductVoucher, selectedShippingVoucher]);
 
@@ -248,7 +248,7 @@ export default function CartPage() {
     }
 
     const updatedCart = cartItems.map((item) =>
-      item.id === productId ? { ...item, quantity } : item,
+    item.id === productId ? { ...item, quantity } : item
     );
 
     syncCart(updatedCart);
@@ -285,7 +285,7 @@ export default function CartPage() {
 
   const amountToFreeShipping = Math.max(
     FREE_SHIPPING_THRESHOLD - cartSummary.subtotal,
-    0,
+    0
   );
 
   if (cartItems.length === 0) {
@@ -318,8 +318,8 @@ export default function CartPage() {
             </CardFooter>
           </Card>
         </section>
-      </main>
-    );
+      </main>);
+
   }
 
   return (
@@ -373,24 +373,24 @@ export default function CartPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
           <div className="space-y-4">
-            {cartItems.map((item) => (
-              <Card key={item.id} className="bg-background shadow-sm">
+            {cartItems.map((item) =>
+            <Card key={item.id} className="bg-background shadow-sm">
                 <CardContent className="grid gap-4 p-4 sm:grid-cols-[112px_1fr] sm:p-5">
                   <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
-                    {item.image ? (
-                      <Image
-                        src={item.image}
-                        alt={item.title}
-                        fill
-                        sizes="112px"
-                        className="object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="flex size-full items-center justify-center text-muted-foreground">
+                    {item.image ?
+                  <Image
+                    src={item.image}
+                    alt={item.title}
+                    fill
+                    sizes="112px"
+                    className="object-cover"
+                    unoptimized /> :
+
+
+                  <div className="flex size-full items-center justify-center text-muted-foreground">
                         <ShoppingBag aria-hidden="true" className="size-8" />
                       </div>
-                    )}
+                  }
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-[1fr_auto]">
@@ -409,14 +409,14 @@ export default function CartPage() {
                     <div className="flex flex-col gap-4 md:items-end">
                       <div className="flex w-fit items-center overflow-hidden rounded-lg border bg-background">
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            updateQuantity(item.id, item.quantity - 1)
-                          }
-                          disabled={item.quantity === 1}
-                          className="rounded-none"
-                        >
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                        updateQuantity(item.id, item.quantity - 1)
+                        }
+                        disabled={item.quantity === 1}
+                        className="rounded-none">
+                        
                           <Minus aria-hidden="true" className="size-4" />
                           <span className="sr-only">Decrease quantity</span>
                         </Button>
@@ -424,13 +424,13 @@ export default function CartPage() {
                           {item.quantity}
                         </span>
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            updateQuantity(item.id, item.quantity + 1)
-                          }
-                          className="rounded-none"
-                        >
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                        updateQuantity(item.id, item.quantity + 1)
+                        }
+                        className="rounded-none">
+                        
                           <Plus aria-hidden="true" className="size-4" />
                           <span className="sr-only">Increase quantity</span>
                         </Button>
@@ -444,9 +444,9 @@ export default function CartPage() {
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
-                              variant="ghost"
-                              className="gap-2 text-destructive hover:text-destructive"
-                            >
+                            variant="ghost"
+                            className="gap-2 text-destructive hover:text-destructive">
+                            
                               <Trash2 aria-hidden="true" className="size-4" />
                               Remove
                             </Button>
@@ -466,9 +466,9 @@ export default function CartPage() {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                variant="destructive"
-                                onClick={() => removeItem(item.id)}
-                              >
+                              variant="destructive"
+                              onClick={() => removeItem(item.id)}>
+                              
                                 Remove
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -479,7 +479,7 @@ export default function CartPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )}
           </div>
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
@@ -506,9 +506,9 @@ export default function CartPage() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
                     <span className="font-medium">
-                      {cartSummary.shipping === 0
-                        ? "Free"
-                        : formatCurrency(cartSummary.shipping)}
+                      {cartSummary.shipping === 0 ?
+                      "Free" :
+                      formatCurrency(cartSummary.shipping)}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -519,35 +519,35 @@ export default function CartPage() {
                       -{formatCurrency(cartSummary.productDiscount)}
                     </span>
                   </div>
-                  {selectedShippingVoucher && (
-                    <div className="flex justify-between gap-4">
+                  {selectedShippingVoucher &&
+                  <div className="flex justify-between gap-4">
                       <span className="text-muted-foreground">
                         Shipping voucher discount
                       </span>
                       <span
-                        className={`text-right font-medium ${
-                          cartSummary.shippingVoucherResult.isApplied
-                            ? "text-emerald-700"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        {cartSummary.shippingVoucherResult.isApplied
-                          ? "Shipping voucher discount applied"
-                          : "Not eligible yet"}
+                      className={`text-right font-medium ${
+                      cartSummary.shippingVoucherResult.isApplied ?
+                      "text-emerald-700" :
+                      "text-muted-foreground"}`
+                      }>
+                      
+                        {cartSummary.shippingVoucherResult.isApplied ?
+                      "Shipping voucher discount applied" :
+                      "Not eligible yet"}
                       </span>
                     </div>
-                  )}
+                  }
                 </div>
 
-                {selectedProductVoucher && (
-                  <div className="rounded-lg border bg-muted/50 p-4">
+                {selectedProductVoucher &&
+                <div className="rounded-lg border bg-muted/50 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <Badge className="mb-2 gap-1.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
                           <BadgePercent
-                            aria-hidden="true"
-                            className="size-3.5"
-                          />
+                          aria-hidden="true"
+                          className="size-3.5" />
+                        
                           {selectedProductVoucher.code}
                         </Badge>
                         <p className="text-sm font-medium">
@@ -558,19 +558,19 @@ export default function CartPage() {
                         </p>
                       </div>
                       <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={removeProductVoucher}
-                      >
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={removeProductVoucher}>
+                      
                         <X aria-hidden="true" className="size-4" />
                         <span className="sr-only">Remove product voucher</span>
                       </Button>
                     </div>
                   </div>
-                )}
+                }
 
-                {selectedShippingVoucher && (
-                  <div className="rounded-lg border bg-muted/50 p-4">
+                {selectedShippingVoucher &&
+                <div className="rounded-lg border bg-muted/50 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <Badge className="mb-2 gap-1.5 bg-orange-100 text-orange-800 hover:bg-orange-100">
@@ -585,16 +585,16 @@ export default function CartPage() {
                         </p>
                       </div>
                       <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={removeShippingVoucher}
-                      >
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={removeShippingVoucher}>
+                      
                         <X aria-hidden="true" className="size-4" />
                         <span className="sr-only">Remove shipping voucher</span>
                       </Button>
                     </div>
                   </div>
-                )}
+                }
 
                 <Separator />
 
@@ -612,12 +612,12 @@ export default function CartPage() {
                   </div>
                   <Progress
                     value={cartSummary.shippingProgress}
-                    className="h-2"
-                  />
+                    className="h-2" />
+                  
                   <p className="mt-3 text-sm text-muted-foreground">
-                    {amountToFreeShipping === 0
-                      ? "You unlocked free shipping."
-                      : `Add ${formatCurrency(amountToFreeShipping)} more to unlock free shipping.`}
+                    {amountToFreeShipping === 0 ?
+                    "You unlocked free shipping." :
+                    `Add ${formatCurrency(amountToFreeShipping)} more to unlock free shipping.`}
                   </p>
                 </div>
               </CardContent>
@@ -625,8 +625,8 @@ export default function CartPage() {
               <CardFooter className="flex-col gap-3">
                 <AlertDialog
                   open={isCheckoutDialogOpen}
-                  onOpenChange={setIsCheckoutDialogOpen}
-                >
+                  onOpenChange={setIsCheckoutDialogOpen}>
+                  
                   <AlertDialogTrigger asChild>
                     <Button className="w-full gap-2">
                       <PackageCheck aria-hidden="true" className="size-4" />
@@ -654,9 +654,9 @@ export default function CartPage() {
                 </AlertDialog>
                 <Button asChild variant="outline" className="w-full">
                   <Link href="/promotion#active-promotions">
-                    {selectedProductVoucher || selectedShippingVoucher
-                      ? "Change Voucher"
-                      : "Apply Promo Voucher"}
+                    {selectedProductVoucher || selectedShippingVoucher ?
+                    "Change Voucher" :
+                    "Apply Promo Voucher"}
                   </Link>
                 </Button>
               </CardFooter>
@@ -667,8 +667,8 @@ export default function CartPage() {
                 <CardContent className="flex items-center gap-3">
                   <Truck
                     aria-hidden="true"
-                    className="size-5 text-emerald-600"
-                  />
+                    className="size-5 text-emerald-600" />
+                  
                   <p className="text-sm font-medium">Fast delivery options</p>
                 </CardContent>
               </Card>
@@ -676,8 +676,8 @@ export default function CartPage() {
                 <CardContent className="flex items-center gap-3">
                   <ShieldCheck
                     aria-hidden="true"
-                    className="size-5 text-sky-600"
-                  />
+                    className="size-5 text-sky-600" />
+                  
                   <p className="text-sm font-medium">Secure checkout flow</p>
                 </CardContent>
               </Card>
@@ -685,8 +685,8 @@ export default function CartPage() {
                 <CardContent className="flex items-center gap-3">
                   <ShoppingBag
                     aria-hidden="true"
-                    className="size-5 text-amber-600"
-                  />
+                    className="size-5 text-amber-600" />
+                  
                   <p className="text-sm font-medium">Cart saved locally</p>
                 </CardContent>
               </Card>
@@ -694,6 +694,6 @@ export default function CartPage() {
           </div>
         </div>
       </section>
-    </main>
-  );
+    </main>);
+
 }

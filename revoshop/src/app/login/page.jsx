@@ -12,8 +12,8 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from
+"@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { loginWithCredentials, writeAuthSession } from "@/lib/auth";
 
@@ -25,6 +25,7 @@ export default function LoginPage() {
   const update = (key) => (event) => {
     setForm((prev) => ({ ...prev, [key]: event.target.value }));
     setIsRejected(false);
+
   };
 
   const handleSubmit = (event) => {
@@ -32,7 +33,7 @@ export default function LoginPage() {
 
     const account = loginWithCredentials(
       form.email.trim().toLowerCase(),
-      form.password,
+      form.password
     );
 
     if (!account) {
@@ -64,19 +65,19 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-4">
-          {isRejected && (
-            <Card className="border-destructive/30 bg-destructive/10 shadow-sm">
+          {isRejected &&
+          <Card className="border-destructive/30 bg-destructive/10 shadow-sm">
               <CardContent className="flex items-start gap-3 p-4 text-sm text-destructive">
                 <AlertTriangle
-                  aria-hidden="true"
-                  className="mt-0.5 size-4 shrink-0"
-                />
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0" />
+              
                 <span>
                   You cannot use this application. Please contact the Admin.
                 </span>
               </CardContent>
             </Card>
-          )}
+          }
 
           <Card className="bg-background shadow-sm">
             <CardHeader>
@@ -98,8 +99,8 @@ export default function LoginPage() {
                     onChange={update("email")}
                     placeholder="user@example.com"
                     autoComplete="email"
-                    required
-                  />
+                    required />
+                  
                 </div>
 
                 <div className="space-y-1.5">
@@ -113,8 +114,8 @@ export default function LoginPage() {
                     onChange={update("password")}
                     placeholder="Enter password"
                     autoComplete="current-password"
-                    required
-                  />
+                    required />
+                  
                 </div>
               </CardContent>
 
@@ -128,6 +129,6 @@ export default function LoginPage() {
           </Card>
         </div>
       </section>
-    </main>
-  );
+    </main>);
+
 }

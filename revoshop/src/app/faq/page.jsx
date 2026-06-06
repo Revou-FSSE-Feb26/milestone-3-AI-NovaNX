@@ -10,15 +10,15 @@ import {
   Search,
   ShieldCheck,
   ShoppingCart,
-  Truck,
-} from "lucide-react";
+  Truck } from
+"lucide-react";
 
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  AccordionTrigger } from
+"@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,8 +27,8 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from
+"@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
@@ -40,86 +40,86 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  SheetTrigger } from
+"@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const faqCategories = [
-  { value: "all", label: "All" },
-  { value: "orders", label: "Orders" },
-  { value: "shipping", label: "Shipping" },
-  { value: "payment", label: "Payment" },
-  { value: "returns", label: "Returns" },
-];
+{ value: "all", label: "All" },
+{ value: "orders", label: "Orders" },
+{ value: "shipping", label: "Shipping" },
+{ value: "payment", label: "Payment" },
+{ value: "returns", label: "Returns" }];
+
 
 const faqs = [
-  {
-    category: "orders",
-    question: "How do I check my order status?",
-    answer:
-      "Open your order confirmation email or visit your account dashboard. You can track whether your order is being prepared, shipped, or delivered.",
-  },
-  {
-    category: "orders",
-    question: "Can I change a product after checkout?",
-    answer:
-      "Changes are available only before the order is processed. If the order has moved to shipping, you can request a return after delivery.",
-  },
-  {
-    category: "shipping",
-    question: "When do I get free shipping?",
-    answer:
-      "Free shipping is available for eligible orders above $75. Some promotion vouchers may also unlock shipping benefits during campaign periods.",
-  },
-  {
-    category: "shipping",
-    question: "How long does delivery take?",
-    answer:
-      "Standard delivery usually takes 2 to 5 business days depending on stock availability and destination coverage.",
-  },
-  {
-    category: "payment",
-    question: "What payment methods are supported?",
-    answer:
-      "RevoShop supports card payment, checkout vouchers, and selected digital wallet flows depending on your region.",
-  },
-  {
-    category: "payment",
-    question: "Why was my voucher not applied?",
-    answer:
-      "A voucher may require minimum spend, selected categories, or active campaign quota. Check the voucher detail before checkout.",
-  },
-  {
-    category: "returns",
-    question: "How do I return a product?",
-    answer:
-      "Submit a return request within the return window, keep the product in good condition, and attach order proof when requested.",
-  },
-  {
-    category: "returns",
-    question: "How long does refund processing take?",
-    answer:
-      "Refunds are reviewed after the returned item is received. Processing time commonly takes 3 to 7 business days.",
-  },
-];
+{
+  category: "orders",
+  question: "How do I check my order status?",
+  answer:
+  "Open your order confirmation email or visit your account dashboard. You can track whether your order is being prepared, shipped, or delivered."
+},
+{
+  category: "orders",
+  question: "Can I change a product after checkout?",
+  answer:
+  "Changes are available only before the order is processed. If the order has moved to shipping, you can request a return after delivery."
+},
+{
+  category: "shipping",
+  question: "When do I get free shipping?",
+  answer:
+  "Free shipping is available for eligible orders above $75. Some promotion vouchers may also unlock shipping benefits during campaign periods."
+},
+{
+  category: "shipping",
+  question: "How long does delivery take?",
+  answer:
+  "Standard delivery usually takes 2 to 5 business days depending on stock availability and destination coverage."
+},
+{
+  category: "payment",
+  question: "What payment methods are supported?",
+  answer:
+  "RevoShop supports card payment, checkout vouchers, and selected digital wallet flows depending on your region."
+},
+{
+  category: "payment",
+  question: "Why was my voucher not applied?",
+  answer:
+  "A voucher may require minimum spend, selected categories, or active campaign quota. Check the voucher detail before checkout."
+},
+{
+  category: "returns",
+  question: "How do I return a product?",
+  answer:
+  "Submit a return request within the return window, keep the product in good condition, and attach order proof when requested."
+},
+{
+  category: "returns",
+  question: "How long does refund processing take?",
+  answer:
+  "Refunds are reviewed after the returned item is received. Processing time commonly takes 3 to 7 business days."
+}];
+
 
 const supportCards = [
-  {
-    title: "Order Help",
-    description: "Track, cancel, or update your checkout flow.",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Delivery Support",
-    description: "Check shipping coverage and delivery status.",
-    icon: Truck,
-  },
-  {
-    title: "Secure Payment",
-    description: "Learn about vouchers, refunds, and payment safety.",
-    icon: CreditCard,
-  },
-];
+{
+  title: "Order Help",
+  description: "Track, cancel, or update your checkout flow.",
+  icon: ShoppingCart
+},
+{
+  title: "Delivery Support",
+  description: "Check shipping coverage and delivery status.",
+  icon: Truck
+},
+{
+  title: "Secure Payment",
+  description: "Learn about vouchers, refunds, and payment safety.",
+  icon: CreditCard
+}];
+
 
 function FAQList({ items }) {
   if (items.length === 0) {
@@ -128,23 +128,23 @@ function FAQList({ items }) {
         <CardContent className="py-10">
           <BadgeHelp
             aria-hidden="true"
-            className="mx-auto size-10 text-muted-foreground"
-          />
+            className="mx-auto size-10 text-muted-foreground" />
+          
           <p className="mt-4 text-lg font-semibold">No FAQ found</p>
           <p className="mt-2 text-sm text-muted-foreground">
             Try another keyword or browse a different category.
           </p>
         </CardContent>
-      </Card>
-    );
+      </Card>);
+
   }
 
   return (
     <Card className="bg-background shadow-sm">
       <CardContent>
         <Accordion type="single" collapsible className="w-full">
-          {items.map((faq) => (
-            <AccordionItem key={faq.question} value={faq.question}>
+          {items.map((faq) =>
+          <AccordionItem key={faq.question} value={faq.question}>
               <AccordionTrigger className="text-base">
                 {faq.question}
               </AccordionTrigger>
@@ -152,11 +152,11 @@ function FAQList({ items }) {
                 {faq.answer}
               </AccordionContent>
             </AccordionItem>
-          ))}
+          )}
         </Accordion>
       </CardContent>
-    </Card>
-  );
+    </Card>);
+
 }
 
 export default function FAQPage() {
@@ -170,10 +170,10 @@ export default function FAQPage() {
     }
 
     return faqs.filter((faq) =>
-      [faq.question, faq.answer, faq.category]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery),
+    [faq.question, faq.answer, faq.category].
+    join(" ").
+    toLowerCase().
+    includes(normalizedQuery)
     );
   }, [query]);
 
@@ -186,7 +186,7 @@ export default function FAQPage() {
   };
 
   return (
-    // Tampilkan halaman static: /faq.
+
     <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
       <section className="mx-auto max-w-7xl">
         <Card className="grid gap-0 bg-background shadow-sm lg:grid-cols-[1.25fr_0.75fr]">
@@ -209,15 +209,15 @@ export default function FAQPage() {
               <div className="relative max-w-xl">
                 <Search
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                />
+                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                
                 <Input
                   type="search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search FAQ by keyword"
-                  className="h-11 pl-9"
-                />
+                  className="h-11 pl-9" />
+                
               </div>
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -298,8 +298,8 @@ export default function FAQPage() {
               <div className="flex items-center gap-3 rounded-lg border bg-background p-3">
                 <PackageCheck
                   aria-hidden="true"
-                  className="size-5 text-emerald-600"
-                />
+                  className="size-5 text-emerald-600" />
+                
                 <span className="text-sm font-medium">
                   Order tracking ready
                 </span>
@@ -307,8 +307,8 @@ export default function FAQPage() {
               <div className="flex items-center gap-3 rounded-lg border bg-background p-3">
                 <ShieldCheck
                   aria-hidden="true"
-                  className="size-5 text-sky-600"
-                />
+                  className="size-5 text-sky-600" />
+                
                 <span className="text-sm font-medium">
                   Payment guidance included
                 </span>
@@ -325,8 +325,8 @@ export default function FAQPage() {
               <Card
                 key={card.title}
                 size="sm"
-                className="bg-background shadow-sm"
-              >
+                className="bg-background shadow-sm">
+                
                 <CardContent className="flex items-start gap-3">
                   <div className="rounded-lg bg-primary/10 p-2 text-primary">
                     <Icon aria-hidden="true" className="size-4" />
@@ -338,8 +338,8 @@ export default function FAQPage() {
                     </p>
                   </div>
                 </CardContent>
-              </Card>
-            );
+              </Card>);
+
           })}
         </div>
 
@@ -358,22 +358,22 @@ export default function FAQPage() {
 
           <Tabs defaultValue="all" className="gap-5">
             <TabsList className="grid h-auto w-full grid-cols-2 gap-1 group-data-horizontal/tabs:h-auto sm:inline-flex sm:w-fit sm:grid-cols-none">
-              {faqCategories.map((category) => (
-                <TabsTrigger
-                  key={category.value}
-                  value={category.value}
-                  className="h-9 px-3"
-                >
+              {faqCategories.map((category) =>
+              <TabsTrigger
+                key={category.value}
+                value={category.value}
+                className="h-9 px-3">
+                
                   {category.label}
                 </TabsTrigger>
-              ))}
+              )}
             </TabsList>
 
-            {faqCategories.map((category) => (
-              <TabsContent key={category.value} value={category.value}>
+            {faqCategories.map((category) =>
+            <TabsContent key={category.value} value={category.value}>
                 <FAQList items={getFaqsByCategory(category.value)} />
               </TabsContent>
-            ))}
+            )}
           </Tabs>
         </section>
 
@@ -394,6 +394,6 @@ export default function FAQPage() {
           </CardFooter>
         </Card>
       </section>
-    </main>
-  );
+    </main>);
+
 }

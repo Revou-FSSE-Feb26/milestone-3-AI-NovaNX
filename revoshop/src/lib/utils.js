@@ -5,10 +5,10 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-/**
- * Cleans malformed image URLs returned by the Platzi Fake Store API
- * (some entries are wrapped in quotes or array-like brackets).
- */
+
+
+
+
 export function cleanImageUrl(imageUrl) {
   if (typeof imageUrl !== "string") {
     return "";
@@ -20,6 +20,6 @@ export function cleanImageUrl(imageUrl) {
 export function formatCurrency(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "USD"
   }).format(value);
 }

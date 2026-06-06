@@ -1,32 +1,128 @@
+import { mockCategories } from "@/data/mockCategories";
+import { mockProducts } from "@/data/mockProducts";
+
 const BASE_URL = "https://api.escuelajs.co/api/v1";
 
 const OVERRIDES_STORAGE_KEY = "revoshop:product-overrides";
 const CATEGORIES_CACHE_KEY = "revoshop:categories-cache";
+const PRODUCT_DATA_SOURCE_STORAGE_KEY = "revoshop:product-data-source";
 
 export const PRODUCTS_UPDATED_EVENT = "products-updated";
+export const PRODUCT_DATA_SOURCE_UPDATED_EVENT = "product-data-source-updated";
+export const PRODUCT_DATA_SOURCES = {
+  PLATZI: "platzi",
+  MOCK: "mock"
+};
 
-// Siapkan data produk dari Platzi Fake Store API:
-// - id
-// - name
-// - price
-// - image
-// - description
-// - category
+
+
+
+
+
+
+
 function normalizeProduct(product) {
-  const images = Array.isArray(product.images)
-    ? product.images
-    : [product.image].filter(Boolean);
+  const source = product && typeof product === "object" ? product : {};
+  const sourceImages = Array.isArray(source.images) ?
+  source.images.filter((image) => typeof image === "string" && image.trim()) :
+  [source.image].filter((image) => typeof image === "string" && image.trim());
+  const category = normalizeCategory(source.category);
+  const images =
+  sourceImages.length > 0 ?
+  sourceImages :
+  [category.image].filter((image) => typeof image === "string" && image.trim());
+  const productName =
+  typeof source.title === "string" && source.title.trim() ?
+  source.title :
+  typeof source.name === "string" && source.name.trim() ?
+  source.name :
+  "Untitled product";
 
   return {
-    ...product,
-    name: product.name || product.title,
-    image: product.image || images[0] || "",
-    images,
+    ...source,
+    id: source.id,
+    title: productName,
+    name: productName,
+    price: Number.isFinite(Number(source.price)) ? Number(source.price) : 0,
+    description:
+    typeof source.description === "string" && source.description.trim() ?
+    source.description :
+    "No description available.",
+    category,
+    image: images[0] || "",
+    images
   };
+}
+
+function normalizeCategory(category) {
+  if (!category || typeof category !== "object") {
+    return { id: null, name: "Uncategorized", image: "" };
+  }
+
+  return {
+    id: category.id ?? null,
+    name:
+    typeof category.name === "string" && category.name.trim() ?
+    category.name :
+    "Uncategorized",
+    image:
+    typeof category.image === "string" && category.image.trim() ?
+    category.image :
+    ""
+  };
+}
+
+function isValidCategory(category) {
+  return category?.name !== "Uncategorized";
+}
+
+function isValidProduct(product) {
+  return product?.id !== undefined && isValidCategory(product.category);
+}
+
+function normalizeProducts(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map(normalizeProduct).filter(isValidProduct);
+}
+
+function normalizeCategories(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map(normalizeCategory).filter(isValidCategory);
 }
 
 function isBrowser() {
   return typeof window !== "undefined";
+}
+
+export function getProductDataSource() {
+  if (!isBrowser()) {
+    return PRODUCT_DATA_SOURCES.PLATZI;
+  }
+
+  const source = window.localStorage.getItem(PRODUCT_DATA_SOURCE_STORAGE_KEY);
+  return Object.values(PRODUCT_DATA_SOURCES).includes(source) ?
+  source :
+  PRODUCT_DATA_SOURCES.PLATZI;
+}
+
+export function setProductDataSource(source) {
+  if (!isBrowser()) {
+    return;
+  }
+
+  const nextSource = Object.values(PRODUCT_DATA_SOURCES).includes(source) ?
+  source :
+  PRODUCT_DATA_SOURCES.PLATZI;
+
+  window.localStorage.setItem(PRODUCT_DATA_SOURCE_STORAGE_KEY, nextSource);
+  window.dispatchEvent(new Event(PRODUCT_DATA_SOURCE_UPDATED_EVENT));
+  window.dispatchEvent(new Event(PRODUCTS_UPDATED_EVENT));
 }
 
 function emptyOverrides() {
@@ -44,10 +140,10 @@ function readOverrides() {
     return {
       created: Array.isArray(parsed.created) ? parsed.created : [],
       updated:
-        parsed.updated && typeof parsed.updated === "object"
-          ? parsed.updated
-          : {},
-      deleted: Array.isArray(parsed.deleted) ? parsed.deleted : [],
+      parsed.updated && typeof parsed.updated === "object" ?
+      parsed.updated :
+      {},
+      deleted: Array.isArray(parsed.deleted) ? parsed.deleted : []
     };
   } catch {
     return emptyOverrides();
@@ -66,7 +162,7 @@ function readCachedCategories() {
 
   try {
     const raw = window.localStorage.getItem(CATEGORIES_CACHE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    return normalizeCategories(raw ? JSON.parse(raw) : []);
   } catch {
     return [];
   }
@@ -85,7 +181,7 @@ function isLocalId(id) {
 function resolveCategory(categoryId, categories) {
   const id = Number(categoryId);
   const match = categories.find((category) => category.id === id);
-  return match || { id, name: "Uncategorized", image: "" };
+  return isValidCategory(match) ? match : { id, name: "Uncategorized", image: "" };
 }
 
 function applyUpdate(product, overrides) {
@@ -95,30 +191,36 @@ function applyUpdate(product, overrides) {
 }
 
 function buildProductFromPayload(payload, categories, base = {}) {
+  const category = resolveCategory(payload.categoryId, categories);
+  const images =
+  payload.images.length > 0 ?
+  payload.images :
+  [category.image].filter((image) => typeof image === "string" && image.trim());
+
   return {
     ...base,
     title: payload.title,
     name: payload.title,
     price: payload.price,
     description: payload.description,
-    category: resolveCategory(payload.categoryId, categories),
-    image: payload.images[0] || "",
-    images: payload.images,
-    updatedAt: new Date().toISOString(),
+    category,
+    image: images[0] || "",
+    images,
+    updatedAt: new Date().toISOString()
   };
 }
 
 async function request(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
+    ...options
   });
 
   if (!response.ok) {
-    const message = await response
-      .json()
-      .then((body) => body?.message)
-      .catch(() => null);
+    const message = await response.
+    json().
+    then((body) => body?.message).
+    catch(() => null);
     throw new Error(message || `Request failed: ${response.status}`);
   }
 
@@ -129,24 +231,44 @@ async function request(path, options = {}) {
   return response.json();
 }
 
+async function readSourceProducts() {
+  if (getProductDataSource() === PRODUCT_DATA_SOURCES.MOCK) {
+    return mockProducts;
+  }
+
+  return request("/products?offset=0&limit=200");
+}
+
+async function readSourceCategories() {
+  if (getProductDataSource() === PRODUCT_DATA_SOURCES.MOCK) {
+    return mockCategories;
+  }
+
+  return request("/categories");
+}
+
+function findMockProductById(id) {
+  return mockProducts.find((product) => String(product.id) === String(id));
+}
+
 export async function getProducts() {
-  // Ambil semua data produk.
-  const remote = await request("/products?offset=0&limit=200");
+
+  const remote = await readSourceProducts();
   const overrides = readOverrides();
   const deletedIds = new Set(overrides.deleted);
 
-  const merged = remote
-    .filter((product) => !deletedIds.has(product.id))
-    .map((product) => applyUpdate(product, overrides));
+  const merged = (Array.isArray(remote) ? remote : []).
+  filter((product) => !deletedIds.has(product.id)).
+  map((product) => applyUpdate(product, overrides));
 
-  return [...overrides.created, ...merged].map(normalizeProduct);
+  return normalizeProducts([...overrides.created, ...merged]);
 }
 
 export async function getProductById(id) {
   const overrides = readOverrides();
 
   if (isLocalId(id)) {
-    // Cari produk berdasarkan id.
+
     const local = overrides.created.find((product) => product.id === id);
     if (!local) throw new Error("Product not found");
     return normalizeProduct(local);
@@ -157,22 +279,36 @@ export async function getProductById(id) {
     throw new Error("Product not found");
   }
 
-  // Cari produk berdasarkan id.
-  const remote = await request(`/products/${id}`);
-  return normalizeProduct(applyUpdate(remote, overrides));
+
+  const remote = await request(`/products/${id}`).catch((error) => {
+    const mockProduct = findMockProductById(id);
+    if (mockProduct) {
+      return mockProduct;
+    }
+
+    throw error;
+  });
+  const product = normalizeProduct(applyUpdate(remote, overrides));
+
+  if (!isValidProduct(product)) {
+    throw new Error("Product not found");
+  }
+
+  return product;
 }
 
 export async function getCategories() {
-  const data = await request("/categories");
-  writeCachedCategories(data);
-  return data;
+  const data = await readSourceCategories();
+  const categories = normalizeCategories(data);
+  writeCachedCategories(categories);
+  return categories;
 }
 
 export async function createProduct(payload) {
   const categories = readCachedCategories();
   const product = buildProductFromPayload(payload, categories, {
     id: `local-${Date.now()}`,
-    creationAt: new Date().toISOString(),
+    creationAt: new Date().toISOString()
   });
 
   const overrides = readOverrides();
@@ -193,7 +329,7 @@ export async function updateProduct(id, payload) {
     const updated = buildProductFromPayload(
       payload,
       categories,
-      overrides.created[index],
+      overrides.created[index]
     );
     overrides.created[index] = updated;
     writeOverrides(overrides);
@@ -202,12 +338,12 @@ export async function updateProduct(id, payload) {
 
   const numericId = Number(id);
   const patch = buildProductFromPayload(payload, categories, {
-    id: numericId,
+    id: numericId
   });
 
   overrides.updated[numericId] = {
     ...(overrides.updated[numericId] || {}),
-    ...patch,
+    ...patch
   };
   writeOverrides(overrides);
 
@@ -219,7 +355,7 @@ export async function deleteProduct(id) {
 
   if (isLocalId(id)) {
     overrides.created = overrides.created.filter(
-      (product) => product.id !== id,
+      (product) => product.id !== id
     );
   } else {
     const numericId = Number(id);
@@ -238,7 +374,7 @@ export function getOverridesSummary() {
   return {
     created: overrides.created.length,
     updated: Object.keys(overrides.updated).length,
-    deleted: overrides.deleted.length,
+    deleted: overrides.deleted.length
   };
 }
 

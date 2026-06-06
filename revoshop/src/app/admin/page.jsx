@@ -17,8 +17,8 @@ import {
   RotateCcw,
   Search,
   ShieldCheck,
-  Trash2,
-} from "lucide-react";
+  Trash2 } from
+"lucide-react";
 
 import {
   AlertDialog,
@@ -30,8 +30,8 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  AlertDialogTrigger } from
+"@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,8 +39,8 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from
+"@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -51,18 +51,21 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  SheetTrigger } from
+"@/components/ui/sheet";
 import {
   clearLocalOverrides,
   createProduct,
   deleteProduct,
   getCategories,
   getOverridesSummary,
+  getProductDataSource,
   getProducts,
+  PRODUCT_DATA_SOURCES,
   PRODUCTS_UPDATED_EVENT,
-  updateProduct,
-} from "@/lib/api";
+  setProductDataSource,
+  updateProduct } from
+"@/lib/api";
 import { readAuthSession, subscribeToAuthSession } from "@/lib/auth";
 import { cleanImageUrl, formatCurrency } from "@/lib/utils";
 
@@ -71,28 +74,28 @@ const EMPTY_FORM = {
   price: "",
   description: "",
   categoryId: "",
-  images: "",
+  images: ""
 };
 
 function buildPayload(form) {
-  const images = form.images
-    .split(/\n|,/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const images = form.images.
+  split(/\n|,/).
+  map((line) => line.trim()).
+  filter(Boolean);
 
   return {
     title: form.title.trim(),
     price: Number(form.price),
     description: form.description.trim(),
     categoryId: Number(form.categoryId),
-    images: images.length > 0 ? images : ["https://placehold.co/600x400"],
+    images: images.length > 0 ? images : ["https://placehold.co/600x400"]
   };
 }
 
 function validate(form) {
   if (!form.title.trim()) return "Product title is required.";
   if (!form.price || Number(form.price) <= 0)
-    return "Price must be a positive number.";
+  return "Price must be a positive number.";
   if (!form.description.trim()) return "Description is required.";
   if (!form.categoryId) return "Please select a category.";
   return "";
@@ -102,32 +105,33 @@ function FieldLabel({ htmlFor, children }) {
   return (
     <label htmlFor={htmlFor} className="text-sm font-medium">
       {children}
-    </label>
-  );
+    </label>);
+
 }
 
 function ProductForm({ form, setForm, categories, error, submitting }) {
   const update = (key) => (event) =>
-    setForm((prev) => ({ ...prev, [key]: event.target.value }));
+  setForm((prev) => ({ ...prev, [key]: event.target.value }));
 
   return (
     <div className="space-y-4">
-      {error && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+      {error &&
+      <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           <AlertTriangle aria-hidden="true" className="mt-0.5 size-4" />
           <span>{error}</span>
         </div>
-      )}
+      }
 
+{}
       <div className="space-y-1.5">
-        <FieldLabel htmlFor="title">Title</FieldLabel>
+        <FieldLabel htmlFor="title">Title</FieldLabel> 
         <Input
           id="title"
           value={form.title}
           onChange={update("title")}
           placeholder="e.g. Classic Sneakers"
-          disabled={submitting}
-        />
+          disabled={submitting} />
+        
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -141,8 +145,8 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
             value={form.price}
             onChange={update("price")}
             placeholder="29.99"
-            disabled={submitting}
-          />
+            disabled={submitting} />
+          
         </div>
 
         <div className="space-y-1.5">
@@ -152,14 +156,14 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
             value={form.categoryId}
             onChange={update("categoryId")}
             disabled={submitting}
-            className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
-          >
+            className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50">
+            
             <option value="">Select category…</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
+            {categories.map((category) =>
+            <option key={category.id} value={category.id}>
                 {category.name}
               </option>
-            ))}
+            )}
           </select>
         </div>
       </div>
@@ -173,8 +177,8 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
           placeholder="Short product description"
           rows={4}
           disabled={submitting}
-          className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
-        />
+          className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50" />
+        
       </div>
 
       <div className="space-y-1.5">
@@ -186,14 +190,14 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
           placeholder="One URL per line (or comma separated)"
           rows={3}
           disabled={submitting}
-          className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
-        />
+          className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50" />
+        
         <p className="text-xs text-muted-foreground">
           Leave empty to use a placeholder image.
         </p>
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
 export default function AdminPage() {
@@ -204,6 +208,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [dataSource, setDataSource] = useState(PRODUCT_DATA_SOURCES.PLATZI);
   const [feedback, setFeedback] = useState(null);
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -220,12 +225,12 @@ export default function AdminPage() {
   const [overridesSummary, setOverridesSummary] = useState({
     created: 0,
     updated: 0,
-    deleted: 0,
+    deleted: 0
   });
 
   const refreshOverridesSummary = useCallback(
     () => setOverridesSummary(getOverridesSummary()),
-    [],
+    []
   );
 
   const loadData = useCallback(async () => {
@@ -237,9 +242,9 @@ export default function AdminPage() {
       setLoading(true);
       setError("");
       const [productsData, categoriesData] = await Promise.all([
-        getProducts(),
-        getCategories(),
-      ]);
+      getProducts(),
+      getCategories()]
+      );
       setProducts(productsData);
       setCategories(categoriesData);
       refreshOverridesSummary();
@@ -250,9 +255,24 @@ export default function AdminPage() {
     }
   }, [authSession?.role, refreshOverridesSummary]);
 
+  const handleDataSourceChange = (event) => {
+    const nextSource = event.target.value;
+    setDataSource(nextSource);
+    setProductDataSource(nextSource);
+    setSearch("");
+    setFeedback({
+      type: "success",
+      message:
+      nextSource === PRODUCT_DATA_SOURCES.MOCK ?
+      "Product source switched to Mock Data." :
+      "Product source switched to Platzi Fake Store API."
+    });
+  };
+
   useEffect(() => {
     queueMicrotask(() => {
       setAuthSession(readAuthSession());
+      setDataSource(getProductDataSource());
       setAuthChecked(true);
     });
 
@@ -267,7 +287,7 @@ export default function AdminPage() {
     if (authSession?.role === "admin") {
       queueMicrotask(loadData);
     }
-  }, [authSession?.role, loadData]);
+  }, [authSession?.role, dataSource, loadData]);
 
   useEffect(() => {
     const handler = () => refreshOverridesSummary();
@@ -280,7 +300,7 @@ export default function AdminPage() {
     clearLocalOverrides();
     setFeedback({
       type: "success",
-      message: "Local product changes have been reset.",
+      message: "Local product changes have been reset."
     });
     await loadData();
   };
@@ -296,11 +316,11 @@ export default function AdminPage() {
     if (!query) return products;
 
     return products.filter((product) =>
-      [product.title, product.category?.name, product.description]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(query),
+    [product.title, product.category?.name, product.description].
+    filter(Boolean).
+    join(" ").
+    toLowerCase().
+    includes(query)
     );
   }, [products, search]);
 
@@ -334,7 +354,7 @@ export default function AdminPage() {
       price: product.price?.toString() ?? "",
       description: product.description ?? "",
       categoryId: product.category?.id?.toString() ?? "",
-      images: (product.images || []).map(cleanImageUrl).join("\n"),
+      images: (product.images || []).map(cleanImageUrl).join("\n")
     });
   };
 
@@ -352,12 +372,12 @@ export default function AdminPage() {
       setEditError("");
       const updated = await updateProduct(
         editingProduct.id,
-        buildPayload(editForm),
+        buildPayload(editForm)
       );
       setProducts((prev) =>
-        prev.map((product) =>
-          product.id === editingProduct.id ? updated : product,
-        ),
+      prev.map((product) =>
+      product.id === editingProduct.id ? updated : product
+      )
       );
       setFeedback({ type: "success", message: `"${updated.title}" updated.` });
       setEditingProduct(null);
@@ -394,8 +414,8 @@ export default function AdminPage() {
             </CardHeader>
           </Card>
         </section>
-      </main>
-    );
+      </main>);
+
   }
 
   if (authSession?.role !== "admin") {
@@ -428,8 +448,8 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         </section>
-      </main>
-    );
+      </main>);
+
   }
 
   return (
@@ -446,25 +466,48 @@ export default function AdminPage() {
                 Product Management
               </CardTitle>
               <CardDescription>
-                Create, edit, and delete products served by the Platzi Fake
-                Store API.
+                Create, edit, and delete products from the selected global data
+                source.
               </CardDescription>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="product-data-source"
+                  className="text-xs font-medium text-muted-foreground">
+                  
+                  Product data source
+                </label>
+                <select
+                  id="product-data-source"
+                  value={dataSource}
+                  onChange={handleDataSourceChange}
+                  disabled={loading}
+                  className="h-9 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50">
+                  
+                  <option value={PRODUCT_DATA_SOURCES.PLATZI}>
+                    Data Source 1: Platzi Fake Store API
+                  </option>
+                  <option value={PRODUCT_DATA_SOURCES.MOCK}>
+                    Data Source 2: Mock Data
+                  </option>
+                </select>
+              </div>
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="outline"
                     className="gap-2"
                     disabled={
-                      loading ||
-                      overridesSummary.created +
-                        overridesSummary.updated +
-                        overridesSummary.deleted ===
-                        0
-                    }
-                  >
+                    loading ||
+                    overridesSummary.created +
+                    overridesSummary.updated +
+                    overridesSummary.deleted ===
+                    0
+                    }>
+                    
                     <RotateCcw aria-hidden="true" className="size-4" />
                     Reset local data
                   </Button>
@@ -485,8 +528,8 @@ export default function AdminPage() {
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       variant="destructive"
-                      onClick={handleResetOverrides}
-                    >
+                      onClick={handleResetOverrides}>
+                      
                       Reset
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -497,13 +540,13 @@ export default function AdminPage() {
                 variant="outline"
                 onClick={loadData}
                 disabled={loading}
-                className="gap-2"
-              >
-                {loading ? (
-                  <Loader2 aria-hidden="true" className="size-4 animate-spin" />
-                ) : (
-                  <RefreshCw aria-hidden="true" className="size-4" />
-                )}
+                className="gap-2">
+                
+                {loading ?
+                <Loader2 aria-hidden="true" className="size-4 animate-spin" /> :
+
+                <RefreshCw aria-hidden="true" className="size-4" />
+                }
                 Refresh
               </Button>
 
@@ -531,18 +574,18 @@ export default function AdminPage() {
                       setForm={setCreateForm}
                       categories={categories}
                       error={createError}
-                      submitting={creating}
-                    />
+                      submitting={creating} />
+                    
                   </div>
 
                   <SheetFooter>
                     <Button onClick={handleCreate} disabled={creating}>
-                      {creating && (
-                        <Loader2
-                          aria-hidden="true"
-                          className="size-4 animate-spin"
-                        />
-                      )}
+                      {creating &&
+                      <Loader2
+                        aria-hidden="true"
+                        className="size-4 animate-spin" />
+
+                      }
                       Create Product
                     </Button>
                     <SheetClose asChild>
@@ -557,35 +600,35 @@ export default function AdminPage() {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {feedback && (
-              <div
-                className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${
-                  feedback.type === "success"
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                    : "border-destructive/30 bg-destructive/10 text-destructive"
-                }`}
-              >
-                {feedback.type === "success" ? (
-                  <CheckCircle2 aria-hidden="true" className="mt-0.5 size-4" />
-                ) : (
-                  <AlertTriangle aria-hidden="true" className="mt-0.5 size-4" />
-                )}
+            {feedback &&
+            <div
+              className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${
+              feedback.type === "success" ?
+              "border-emerald-200 bg-emerald-50 text-emerald-800" :
+              "border-destructive/30 bg-destructive/10 text-destructive"}`
+              }>
+              
+                {feedback.type === "success" ?
+              <CheckCircle2 aria-hidden="true" className="mt-0.5 size-4" /> :
+
+              <AlertTriangle aria-hidden="true" className="mt-0.5 size-4" />
+              }
                 <span>{feedback.message}</span>
               </div>
-            )}
+            }
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="relative w-full max-w-sm">
                 <Search
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                />
+                  className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search products"
-                  className="pl-8"
-                />
+                  className="pl-8" />
+                
               </div>
 
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -595,9 +638,9 @@ export default function AdminPage() {
             </div>
 
             {(overridesSummary.created > 0 ||
-              overridesSummary.updated > 0 ||
-              overridesSummary.deleted > 0) && (
-              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed bg-muted/40 p-3 text-xs text-muted-foreground">
+            overridesSummary.updated > 0 ||
+            overridesSummary.deleted > 0) &&
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed bg-muted/40 p-3 text-xs text-muted-foreground">
                 <Database aria-hidden="true" className="size-3.5" />
                 <span className="font-medium text-foreground">
                   Local overrides:
@@ -615,43 +658,43 @@ export default function AdminPage() {
                   Stored in your browser&apos;s localStorage.
                 </span>
               </div>
-            )}
+            }
 
             <Separator />
 
             {error && <p className="text-sm text-destructive">{error}</p>}
 
-            {loading ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">
+            {loading ?
+            <p className="py-10 text-center text-sm text-muted-foreground">
                 Loading products…
-              </p>
-            ) : filteredProducts.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">
+              </p> :
+            filteredProducts.length === 0 ?
+            <p className="py-10 text-center text-sm text-muted-foreground">
                 No products match your search.
-              </p>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {filteredProducts.map((product) => {
-                  const imageUrl = cleanImageUrl(product.images?.[0]);
-                  const isDeleting = deletingId === product.id;
+              </p> :
 
-                  return (
-                    <div
-                      key={product.id}
-                      className="flex flex-col gap-3 rounded-xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-md"
-                    >
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {filteredProducts.map((product) => {
+                const imageUrl = cleanImageUrl(product.images?.[0]);
+                const isDeleting = deletingId === product.id;
+
+                return (
+                  <div
+                    key={product.id}
+                    className="flex flex-col gap-3 rounded-xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-md">
+                    
                       <div className="flex items-start gap-3">
                         <div className="relative size-16 shrink-0 overflow-hidden rounded-md border bg-muted">
-                          {imageUrl && (
-                            <Image
-                              src={imageUrl}
-                              alt={product.title}
-                              fill
-                              sizes="64px"
-                              className="object-cover"
-                              unoptimized
-                            />
-                          )}
+                          {imageUrl &&
+                        <Image
+                          src={imageUrl}
+                          alt={product.title}
+                          fill
+                          sizes="64px"
+                          className="object-cover"
+                          unoptimized />
+
+                        }
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="line-clamp-2 font-semibold leading-tight">
@@ -673,11 +716,11 @@ export default function AdminPage() {
 
                       <div className="mt-auto flex gap-2 border-t pt-3">
                         <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 gap-1.5"
-                          onClick={() => openEdit(product)}
-                        >
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 gap-1.5"
+                        onClick={() => openEdit(product)}>
+                        
                           <Pencil aria-hidden="true" className="size-3.5" />
                           Edit
                         </Button>
@@ -685,22 +728,22 @@ export default function AdminPage() {
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex-1 gap-1.5 text-destructive hover:text-destructive"
-                              disabled={isDeleting}
-                            >
-                              {isDeleting ? (
-                                <Loader2
-                                  aria-hidden="true"
-                                  className="size-3.5 animate-spin"
-                                />
-                              ) : (
-                                <Trash2
-                                  aria-hidden="true"
-                                  className="size-3.5"
-                                />
-                              )}
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 gap-1.5 text-destructive hover:text-destructive"
+                            disabled={isDeleting}>
+                            
+                              {isDeleting ?
+                            <Loader2
+                              aria-hidden="true"
+                              className="size-3.5 animate-spin" /> :
+
+
+                            <Trash2
+                              aria-hidden="true"
+                              className="size-3.5" />
+
+                            }
                               Delete
                             </Button>
                           </AlertDialogTrigger>
@@ -720,20 +763,20 @@ export default function AdminPage() {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                variant="destructive"
-                                onClick={() => handleDelete(product)}
-                              >
+                              variant="destructive"
+                              onClick={() => handleDelete(product)}>
+                              
                                 Delete
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
-                    </div>
-                  );
-                })}
+                    </div>);
+
+              })}
               </div>
-            )}
+            }
           </CardContent>
         </Card>
       </section>
@@ -742,8 +785,8 @@ export default function AdminPage() {
         open={Boolean(editingProduct)}
         onOpenChange={(open) => {
           if (!open) setEditingProduct(null);
-        }}
-      >
+        }}>
+        
         <SheetContent className="w-full sm:max-w-lg">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
@@ -761,27 +804,27 @@ export default function AdminPage() {
               setForm={setEditForm}
               categories={categories}
               error={editError}
-              submitting={updating}
-            />
+              submitting={updating} />
+            
           </div>
 
           <SheetFooter>
             <Button onClick={handleUpdate} disabled={updating}>
-              {updating && (
-                <Loader2 aria-hidden="true" className="size-4 animate-spin" />
-              )}
+              {updating &&
+              <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+              }
               Save Changes
             </Button>
             <Button
               variant="outline"
               disabled={updating}
-              onClick={() => setEditingProduct(null)}
-            >
+              onClick={() => setEditingProduct(null)}>
+              
               Cancel
             </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
-    </main>
-  );
+    </main>);
+
 }

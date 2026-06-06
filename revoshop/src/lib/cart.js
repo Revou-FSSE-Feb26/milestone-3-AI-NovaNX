@@ -12,27 +12,41 @@ const CATEGORY_ALIASES = {
   clothes: "Clothes",
   clothing: "Clothes",
   fashion: "Clothes",
+  "mens shirts": "Clothes",
   shirt: "Clothes",
   shirts: "Clothes",
+  tops: "Clothes",
+  "womens dresses": "Clothes",
   shoe: "Shoes",
   shoes: "Shoes",
+  "mens shoes": "Shoes",
   sneaker: "Shoes",
   sneakers: "Shoes",
+  "womens shoes": "Shoes",
   electronic: "Electronics",
   electronics: "Electronics",
   gadget: "Electronics",
   gadgets: "Electronics",
+  laptop: "Electronics",
+  laptops: "Electronics",
+  "mobile accessories": "Electronics",
+  smartphone: "Electronics",
+  smartphones: "Electronics",
+  tablet: "Electronics",
+  tablets: "Electronics",
   tech: "Electronics",
   furniture: "Furniture",
   home: "Furniture",
+  "home decoration": "Furniture",
   household: "Furniture",
+  "kitchen accessories": "Furniture"
 };
 
 function normalizeCategoryKey(category) {
-  return String(category || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ");
+  return String(category || "").
+  trim().
+  toLowerCase().
+  replace(/[^a-z0-9]+/g, " ");
 }
 
 export function normalizeCartCategory(category) {
@@ -51,8 +65,8 @@ export function isVoucherCategoryEligible(itemCategory, voucherCategory) {
   }
 
   return (
-    normalizeCartCategory(itemCategory) === normalizeCartCategory(voucherCategory)
-  );
+    normalizeCartCategory(itemCategory) === normalizeCartCategory(voucherCategory));
+
 }
 
 export function readCartItems() {
@@ -64,10 +78,17 @@ export function readCartItems() {
 }
 
 export function writeCartItems(items) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   window.dispatchEvent(new Event(CART_UPDATED_EVENT));
 }
 
 export function getCartItemCount() {
+  if (typeof window === "undefined") {
+    return 0;
+  }
   return readCartItems().reduce((total, item) => total + item.quantity, 0);
 }

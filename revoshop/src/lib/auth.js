@@ -2,19 +2,19 @@ export const AUTH_STORAGE_KEY = "revoshop-auth-session";
 export const AUTH_UPDATED_EVENT = "auth-updated";
 
 const ACCOUNTS = [
-  {
-    email: "user@example.com",
-    password: "user123",
-    role: "user",
-    name: "RevoShop User",
-  },
-  {
-    email: "admin@example.com",
-    password: "admin123",
-    role: "admin",
-    name: "RevoShop Admin",
-  },
-];
+{
+  email: "user@example.com",
+  password: "user123",
+  role: "user",
+  name: "RevoShop User"
+},
+{
+  email: "admin@example.com",
+  password: "admin123",
+  role: "admin",
+  name: "RevoShop Admin"
+}];
+
 
 function isBrowser() {
   return typeof window !== "undefined";
@@ -22,7 +22,7 @@ function isBrowser() {
 
 export function loginWithCredentials(email, password) {
   return ACCOUNTS.find(
-    (account) => account.email === email && account.password === password,
+    (account) => account.email === email && account.password === password
   );
 }
 
@@ -59,7 +59,7 @@ export function writeAuthSession(account) {
     email: account.email,
     role: account.role,
     name: account.name,
-    loggedInAt: new Date().toISOString(),
+    loggedInAt: new Date().toISOString()
   };
 
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
