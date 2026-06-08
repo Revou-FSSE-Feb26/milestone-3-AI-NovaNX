@@ -81,7 +81,7 @@ export default function Navbar() {
     [authSessionSnapshot]
   );
   const isLoginPage = pathname === "/login";
-  const isUserRole = authSession?.role === "user";
+  const isNonAdminRole = authSession && authSession.role !== "admin";
 
   const isActive = (href) => {
     if (href === "/") {
@@ -144,7 +144,7 @@ export default function Navbar() {
         <div className="ml-4 hidden items-center gap-1 lg:flex">
           {navLinks.map((link) => {
             const isAdminLink = link.href === "/admin";
-            const isRestrictedAdminLink = isAdminLink && isUserRole;
+            const isRestrictedAdminLink = isAdminLink && isNonAdminRole;
 
             return (
               <Button
@@ -306,7 +306,7 @@ export default function Navbar() {
               <div className="grid gap-2">
                 {navLinks.map((link) => {
                   const isAdminLink = link.href === "/admin";
-                  const isRestrictedAdminLink = isAdminLink && isUserRole;
+                  const isRestrictedAdminLink = isAdminLink && isNonAdminRole;
 
                   return (
                     <SheetClose key={link.href} asChild>

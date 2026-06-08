@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, LogIn, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Loader2, LogIn, ShieldCheck } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,38 +12,68 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle } from
-"@/components/ui/card";
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { loginWithCredentials, writeAuthSession } from "@/lib/auth";
+import {
+  loginWithCredentials,
+  readAuthSession,
+  writeAuthSession,
+} from "@/lib/auth";
+
+function validateLoginForm(form) {
+  if (!form.email.trim()) return "Email is required.";
+  if (!form.password) return "Password is required.";
+  return "";
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
-  const [isRejected, setIsRejected] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const update = (key) => (event) => {
-    setForm((prev) => ({ ...prev, [key]: event.target.value }));
-    setIsRejected(false);
+  useEffect(() => {
+    const session = readAuthSession();
 
-  };
+    if (session) {
+      router.replace("/");
+    }
+  }, [router]);
 
-  const handleSubmit = (event) => {
+  function handleInputChange(event) {
+    const { name, value } = event.target;
+
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrorMessage("");
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    const account = loginWithCredentials(
-      form.email.trim().toLowerCase(),
-      form.password
-    );
-
-    if (!account) {
-      setIsRejected(true);
+    const validationError = validateLoginForm(form);
+    if (validationError) {
+      setErrorMessage(validationError);
       return;
     }
 
-    writeAuthSession(account);
-    router.push("/");
-  };
+    try {
+      setIsSubmitting(true);
+      setErrorMessage("");
+
+      const authResult = await loginWithCredentials(
+        form.email.trim().toLowerCase(),
+        form.password,
+      );
+
+      writeAuthSession(authResult);
+      router.push("/");
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-muted/30 px-4 py-10 text-foreground sm:px-6 lg:px-8">
@@ -65,25 +95,24 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-4">
-          {isRejected &&
-          <Card className="border-destructive/30 bg-destructive/10 shadow-sm">
+          {errorMessage && (
+            <Card className="border-destructive/30 bg-destructive/10 shadow-sm">
               <CardContent className="flex items-start gap-3 p-4 text-sm text-destructive">
                 <AlertTriangle
-                aria-hidden="true"
-                className="mt-0.5 size-4 shrink-0" />
-              
-                <span>
-                  You cannot use this application. Please contact the Admin.
-                </span>
+                  aria-hidden="true"
+                  className="mt-0.5 size-4 shrink-0"
+                />
+
+                <span>{errorMessage}</span>
               </CardContent>
             </Card>
-          }
+          )}
 
           <Card className="bg-background shadow-sm">
             <CardHeader>
               <CardTitle>Sign in</CardTitle>
               <CardDescription>
-                Enter the email and password assigned for your role.
+                Enter one of the API accounts assigned for your role.
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>
@@ -94,13 +123,15 @@ export default function LoginPage() {
                   </label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     value={form.email}
-                    onChange={update("email")}
-                    placeholder="user@example.com"
+                    onChange={handleInputChange}
+                    placeholder="nico@gmail.com"
                     autoComplete="email"
-                    required />
-                  
+                    disabled={isSubmitting}
+                    required
+                  />
                 </div>
 
                 <div className="space-y-1.5">
@@ -109,26 +140,35 @@ export default function LoginPage() {
                   </label>
                   <Input
                     id="password"
+                    name="password"
                     type="password"
                     value={form.password}
-                    onChange={update("password")}
+                    onChange={handleInputChange}
                     placeholder="Enter password"
                     autoComplete="current-password"
-                    required />
-                  
+                    disabled={isSubmitting}
+                    required
+                  />
                 </div>
               </CardContent>
 
               <CardFooter className="flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                <Button type="submit" className="gap-2">
-                  <LogIn aria-hidden="true" className="size-4" />
-                  Login
+                <Button type="submit" className="gap-2" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <Loader2
+                      aria-hidden="true"
+                      className="size-4 animate-spin"
+                    />
+                  ) : (
+                    <LogIn aria-hidden="true" className="size-4" />
+                  )}
+                  {isSubmitting ? "Logging in..." : "Login"}
                 </Button>
               </CardFooter>
             </form>
           </Card>
         </div>
       </section>
-    </main>);
-
+    </main>
+  );
 }

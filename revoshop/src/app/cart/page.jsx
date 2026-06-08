@@ -2,11 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import {
   ArrowLeft,
   BadgePercent,
-  Check,
   Minus,
   PackageCheck,
   Plus,
@@ -185,7 +184,6 @@ function calculateShippingVoucherDiscount(subtotal, voucher, shipping) {
 }
 
 export default function CartPage() {
-  const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const storedCartSnapshot = useSyncExternalStore(
     subscribeToCartStorage,
     getCartSnapshot,
@@ -272,14 +270,6 @@ export default function CartPage() {
   const removeShippingVoucher = () => {
     localStorage.removeItem(SHIPPING_VOUCHER_STORAGE_KEY);
     localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
-    window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
-  };
-
-  const completeCheckout = () => {
-    localStorage.removeItem(PRODUCT_VOUCHER_STORAGE_KEY);
-    localStorage.removeItem(SHIPPING_VOUCHER_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
-    syncCart([]);
     window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
   };
 
@@ -623,35 +613,12 @@ export default function CartPage() {
               </CardContent>
 
               <CardFooter className="flex-col gap-3">
-                <AlertDialog
-                  open={isCheckoutDialogOpen}
-                  onOpenChange={setIsCheckoutDialogOpen}>
-                  
-                  <AlertDialogTrigger asChild>
-                    <Button className="w-full gap-2">
-                      <PackageCheck aria-hidden="true" className="size-4" />
-                      Checkout Now
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogMedia>
-                        <Check aria-hidden="true" className="size-5" />
-                      </AlertDialogMedia>
-                      <AlertDialogTitle>Checkout processed.</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Your order has been created for{" "}
-                        {formatCurrency(cartSummary.total)}. The cart will be
-                        cleared after you close this confirmation.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogAction onClick={completeCheckout}>
-                        Done
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button asChild className="w-full gap-2">
+                  <Link href="/checkout">
+                    <PackageCheck aria-hidden="true" className="size-4" />
+                    Checkout Now
+                  </Link>
+                </Button>
                 <Button asChild variant="outline" className="w-full">
                   <Link href="/promotion#active-promotions">
                     {selectedProductVoucher || selectedShippingVoucher ?

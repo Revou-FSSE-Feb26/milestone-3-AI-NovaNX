@@ -1,29 +1,26 @@
 export const AUTH_STORAGE_KEY = "revoshop-auth-session";
 export const AUTH_UPDATED_EVENT = "auth-updated";
-
-const ACCOUNTS = [
-{
-  email: "user@example.com",
-  password: "user123",
-  role: "user",
-  name: "RevoShop User"
-},
-{
-  email: "admin@example.com",
-  password: "admin123",
-  role: "admin",
-  name: "RevoShop Admin"
-}];
-
+export const AUTH_TOKEN_COOKIE = "revoshop-auth-token";
+export const AUTH_ROLE_COOKIE = "revoshop-auth-role";
 
 function isBrowser() {
   return typeof window !== "undefined";
 }
 
-export function loginWithCredentials(email, password) {
-  return ACCOUNTS.find(
-    (account) => account.email === email && account.password === password
-  );
+export async function loginWithCredentials(email, password) {
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(body?.message || "Invalid email or password.");
+  }
+
+  return body;
 }
 
 export function readAuthSession() {
@@ -50,15 +47,18 @@ export function getAuthSessionServerSnapshot() {
   return "null";
 }
 
-export function writeAuthSession(account) {
+export function writeAuthSession(authResult) {
   if (!isBrowser()) {
     return;
   }
 
+  const user = authResult.user || authResult;
   const session = {
-    email: account.email,
-    role: account.role,
-    name: account.name,
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    name: user.name,
+    avatar: user.avatar,
     loggedInAt: new Date().toISOString()
   };
 
@@ -72,6 +72,7 @@ export function clearAuthSession() {
   }
 
   localStorage.removeItem(AUTH_STORAGE_KEY);
+  fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
   window.dispatchEvent(new Event(AUTH_UPDATED_EVENT));
 }
 
