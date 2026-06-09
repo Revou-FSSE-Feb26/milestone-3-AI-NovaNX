@@ -1,385 +1,324 @@
 import { mockCategories } from "@/data/mockCategories";
 import { mockProducts } from "@/data/mockProducts";
 
-const BASE_URL = "https://api.escuelajs.co/api/v1";
+// ============================================================
+// KONFIGURASI DASAR
+// ============================================================
 
-const OVERRIDES_STORAGE_KEY = "revoshop:product-overrides";
-const CATEGORIES_CACHE_KEY = "revoshop:categories-cache";
-const PRODUCT_DATA_SOURCE_STORAGE_KEY = "revoshop:product-data-source";
+// Endpoint API internal Next.js (lihat folder: app/api/products/)
+const API_BASE = "/api/products";
 
-export const PRODUCTS_UPDATED_EVENT = "products-updated";
-export const PRODUCT_DATA_SOURCE_UPDATED_EVENT = "product-data-source-updated";
+// URL untuk mengambil daftar kategori dari API Platzi Fake Store
+const PLATZI_CATEGORIES_URL = "https://api.escuelajs.co/api/v1/categories";
+
+// Nama kunci untuk menyimpan pilihan sumber data di localStorage
+const DATA_SOURCE_KEY = "revoshop:product-data-source";
+
+// ============================================================
+// KONSTANTA SUMBER DATA
+// Digunakan untuk memilih antara data lokal atau API Platzi
+// ============================================================
+
 export const PRODUCT_DATA_SOURCES = {
-  PLATZI: "platzi",
-  MOCK: "mock"
+  PLATZI: "platzi", // Menggunakan API Platzi Fake Store (eksternal)
+  MOCK: "mock", // Menggunakan data lokal dari file mockProducts.js
 };
 
+// ============================================================
+// DATA MOCK (simulasi database di memory)
+// Ini adalah salinan dari mockProducts.js yang bisa diubah
+// saat aplikasi berjalan (create, update, delete)
+// ============================================================
 
+let mockStore = mockProducts.map(function (product) {
+  // Buat salinan setiap produk agar tidak mengubah data aslinya
+  return { ...product };
+});
 
+// ============================================================
+// SUMBER DATA: baca dan simpan pilihan pengguna
+// ============================================================
 
-
-
-
-
-function normalizeProduct(product) {
-  const source = product && typeof product === "object" ? product : {};
-  const sourceImages = Array.isArray(source.images) ?
-  source.images.filter((image) => typeof image === "string" && image.trim()) :
-  [source.image].filter((image) => typeof image === "string" && image.trim());
-  const category = normalizeCategory(source.category);
-  const images =
-  sourceImages.length > 0 ?
-  sourceImages :
-  [category.image].filter((image) => typeof image === "string" && image.trim());
-  const productName =
-  typeof source.title === "string" && source.title.trim() ?
-  source.title :
-  typeof source.name === "string" && source.name.trim() ?
-  source.name :
-  "Untitled product";
-
-  return {
-    ...source,
-    id: source.id,
-    title: productName,
-    name: productName,
-    price: Number.isFinite(Number(source.price)) ? Number(source.price) : 0,
-    description:
-    typeof source.description === "string" && source.description.trim() ?
-    source.description :
-    "No description available.",
-    category,
-    image: images[0] || "",
-    images
-  };
-}
-
-function normalizeCategory(category) {
-  if (!category || typeof category !== "object") {
-    return { id: null, name: "Uncategorized", image: "" };
-  }
-
-  return {
-    id: category.id ?? null,
-    name:
-    typeof category.name === "string" && category.name.trim() ?
-    category.name :
-    "Uncategorized",
-    image:
-    typeof category.image === "string" && category.image.trim() ?
-    category.image :
-    ""
-  };
-}
-
-function isValidCategory(category) {
-  return category?.name !== "Uncategorized";
-}
-
-function isValidProduct(product) {
-  return product?.id !== undefined && isValidCategory(product.category);
-}
-
-function normalizeProducts(data) {
-  if (!Array.isArray(data)) {
-    return [];
-  }
-
-  return data.map(normalizeProduct).filter(isValidProduct);
-}
-
-function normalizeCategories(data) {
-  if (!Array.isArray(data)) {
-    return [];
-  }
-
-  return data.map(normalizeCategory).filter(isValidCategory);
-}
-
-function isBrowser() {
-  return typeof window !== "undefined";
-}
-
+/**
+ * Membaca pilihan sumber data yang tersimpan di localStorage.
+ * Jika belum pernah dipilih, default-nya adalah PLATZI.
+ */
 export function getProductDataSource() {
-  if (!isBrowser()) {
+  // localStorage hanya tersedia di browser, bukan di server (Next.js SSR)
+  if (typeof window === "undefined") {
     return PRODUCT_DATA_SOURCES.PLATZI;
   }
 
-  const source = window.localStorage.getItem(PRODUCT_DATA_SOURCE_STORAGE_KEY);
-  return Object.values(PRODUCT_DATA_SOURCES).includes(source) ?
-  source :
-  PRODUCT_DATA_SOURCES.PLATZI;
+  const savedSource = localStorage.getItem(DATA_SOURCE_KEY);
+
+  if (savedSource === PRODUCT_DATA_SOURCES.MOCK) {
+    return PRODUCT_DATA_SOURCES.MOCK;
+  }
+
+  return PRODUCT_DATA_SOURCES.PLATZI;
 }
 
+/**
+ * Menyimpan pilihan sumber data ke localStorage,
+ * sehingga pilihan tetap ada saat halaman di-refresh.
+ */
 export function setProductDataSource(source) {
-  if (!isBrowser()) {
+  // localStorage hanya tersedia di browser, bukan di server (Next.js SSR)
+  if (typeof window === "undefined") {
     return;
   }
 
-  const nextSource = Object.values(PRODUCT_DATA_SOURCES).includes(source) ?
-  source :
-  PRODUCT_DATA_SOURCES.PLATZI;
-
-  window.localStorage.setItem(PRODUCT_DATA_SOURCE_STORAGE_KEY, nextSource);
-  window.dispatchEvent(new Event(PRODUCT_DATA_SOURCE_UPDATED_EVENT));
-  window.dispatchEvent(new Event(PRODUCTS_UPDATED_EVENT));
-}
-
-function emptyOverrides() {
-  return { created: [], updated: {}, deleted: [] };
-}
-
-function readOverrides() {
-  if (!isBrowser()) return emptyOverrides();
-
-  try {
-    const raw = window.localStorage.getItem(OVERRIDES_STORAGE_KEY);
-    if (!raw) return emptyOverrides();
-
-    const parsed = JSON.parse(raw);
-    return {
-      created: Array.isArray(parsed.created) ? parsed.created : [],
-      updated:
-      parsed.updated && typeof parsed.updated === "object" ?
-      parsed.updated :
-      {},
-      deleted: Array.isArray(parsed.deleted) ? parsed.deleted : []
-    };
-  } catch {
-    return emptyOverrides();
-  }
-}
-
-function writeOverrides(overrides) {
-  if (!isBrowser()) return;
-
-  window.localStorage.setItem(OVERRIDES_STORAGE_KEY, JSON.stringify(overrides));
-  window.dispatchEvent(new Event(PRODUCTS_UPDATED_EVENT));
-}
-
-function readCachedCategories() {
-  if (!isBrowser()) return [];
-
-  try {
-    const raw = window.localStorage.getItem(CATEGORIES_CACHE_KEY);
-    return normalizeCategories(raw ? JSON.parse(raw) : []);
-  } catch {
-    return [];
-  }
-}
-
-function writeCachedCategories(categories) {
-  if (!isBrowser()) return;
-
-  window.localStorage.setItem(CATEGORIES_CACHE_KEY, JSON.stringify(categories));
-}
-
-function isLocalId(id) {
-  return typeof id === "string" && id.startsWith("local-");
-}
-
-function resolveCategory(categoryId, categories) {
-  const id = Number(categoryId);
-  const match = categories.find((category) => category.id === id);
-  return isValidCategory(match) ? match : { id, name: "Uncategorized", image: "" };
-}
-
-function applyUpdate(product, overrides) {
-  const patch = overrides.updated[product.id];
-  if (!patch) return product;
-  return { ...product, ...patch };
-}
-
-function buildProductFromPayload(payload, categories, base = {}) {
-  const category = resolveCategory(payload.categoryId, categories);
-  const images =
-  payload.images.length > 0 ?
-  payload.images :
-  [category.image].filter((image) => typeof image === "string" && image.trim());
-
-  return {
-    ...base,
-    title: payload.title,
-    name: payload.title,
-    price: payload.price,
-    description: payload.description,
-    category,
-    image: images[0] || "",
-    images,
-    updatedAt: new Date().toISOString()
-  };
-}
-
-async function request(path, options = {}) {
-  const response = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options
-  });
-
-  if (!response.ok) {
-    const message = await response.
-    json().
-    then((body) => body?.message).
-    catch(() => null);
-    throw new Error(message || `Request failed: ${response.status}`);
-  }
-
-  if (response.status === 204) {
-    return null;
-  }
-
-  return response.json();
-}
-
-async function readSourceProducts() {
-  if (getProductDataSource() === PRODUCT_DATA_SOURCES.MOCK) {
-    return mockProducts;
-  }
-
-  return request("/products?offset=0&limit=200");
-}
-
-async function readSourceCategories() {
-  if (getProductDataSource() === PRODUCT_DATA_SOURCES.MOCK) {
-    return mockCategories;
-  }
-
-  return request("/categories");
-}
-
-function findMockProductById(id) {
-  return mockProducts.find((product) => String(product.id) === String(id));
-}
-
-export async function getProducts() {
-
-  const remote = await readSourceProducts();
-  const overrides = readOverrides();
-  const deletedIds = new Set(overrides.deleted);
-
-  const merged = (Array.isArray(remote) ? remote : []).
-  filter((product) => !deletedIds.has(product.id)).
-  map((product) => applyUpdate(product, overrides));
-
-  return normalizeProducts([...overrides.created, ...merged]);
-}
-
-export async function getProductById(id) {
-  const overrides = readOverrides();
-
-  if (isLocalId(id)) {
-
-    const local = overrides.created.find((product) => product.id === id);
-    if (!local) throw new Error("Product not found");
-    return normalizeProduct(local);
-  }
-
-  const numericId = Number(id);
-  if (overrides.deleted.includes(numericId)) {
-    throw new Error("Product not found");
-  }
-
-
-  const remote = await request(`/products/${id}`).catch((error) => {
-    const mockProduct = findMockProductById(id);
-    if (mockProduct) {
-      return mockProduct;
-    }
-
-    throw error;
-  });
-  const product = normalizeProduct(applyUpdate(remote, overrides));
-
-  if (!isValidProduct(product)) {
-    throw new Error("Product not found");
-  }
-
-  return product;
-}
-
-export async function getCategories() {
-  const data = await readSourceCategories();
-  const categories = normalizeCategories(data);
-  writeCachedCategories(categories);
-  return categories;
-}
-
-export async function createProduct(payload) {
-  const categories = readCachedCategories();
-  const product = buildProductFromPayload(payload, categories, {
-    id: `local-${Date.now()}`,
-    creationAt: new Date().toISOString()
-  });
-
-  const overrides = readOverrides();
-  overrides.created = [product, ...overrides.created];
-  writeOverrides(overrides);
-
-  return product;
-}
-
-export async function updateProduct(id, payload) {
-  const categories = readCachedCategories();
-  const overrides = readOverrides();
-
-  if (isLocalId(id)) {
-    const index = overrides.created.findIndex((product) => product.id === id);
-    if (index === -1) throw new Error("Product not found");
-
-    const updated = buildProductFromPayload(
-      payload,
-      categories,
-      overrides.created[index]
-    );
-    overrides.created[index] = updated;
-    writeOverrides(overrides);
-    return updated;
-  }
-
-  const numericId = Number(id);
-  const patch = buildProductFromPayload(payload, categories, {
-    id: numericId
-  });
-
-  overrides.updated[numericId] = {
-    ...(overrides.updated[numericId] || {}),
-    ...patch
-  };
-  writeOverrides(overrides);
-
-  return overrides.updated[numericId];
-}
-
-export async function deleteProduct(id) {
-  const overrides = readOverrides();
-
-  if (isLocalId(id)) {
-    overrides.created = overrides.created.filter(
-      (product) => product.id !== id
-    );
+  if (source === PRODUCT_DATA_SOURCES.MOCK) {
+    localStorage.setItem(DATA_SOURCE_KEY, PRODUCT_DATA_SOURCES.MOCK);
   } else {
-    const numericId = Number(id);
-    if (!overrides.deleted.includes(numericId)) {
-      overrides.deleted.push(numericId);
-    }
-    delete overrides.updated[numericId];
+    localStorage.setItem(DATA_SOURCE_KEY, PRODUCT_DATA_SOURCES.PLATZI);
   }
+}
 
-  writeOverrides(overrides);
+// ============================================================
+// FUNGSI PEMBANTU (HELPER) — hanya digunakan untuk mode MOCK
+// ============================================================
+
+/**
+ * Mencari data kategori berdasarkan ID dari daftar mockCategories.
+ * Mengembalikan null jika kategori tidak ditemukan.
+ */
+function findCategoryById(categoryId) {
+  for (let i = 0; i < mockCategories.length; i++) {
+    if (Number(mockCategories[i].id) === Number(categoryId)) {
+      return mockCategories[i];
+    }
+  }
   return null;
 }
 
-export function getOverridesSummary() {
-  const overrides = readOverrides();
+/**
+ * Membuat objek produk baru dari data form.
+ * Digunakan saat create dan update produk di mode MOCK.
+ *
+ * - formData : data yang dikirim dari form (title, price, dll)
+ * - existingId: ID yang sudah ada (dipakai saat update agar ID tidak berubah)
+ */
+function makeProductFromForm(formData, existingId) {
+  // Gunakan ID yang sudah ada, atau buat ID baru dari timestamp
+  const id = existingId !== undefined ? existingId : Date.now();
+
+  // Cari objek kategori berdasarkan ID yang dipilih dari form
+  const category = findCategoryById(formData.categoryId);
+
+  // Tentukan gambar produk
+  let images;
+  if (formData.images && formData.images.length > 0) {
+    images = formData.images;
+  } else {
+    // Gunakan gambar placeholder jika tidak ada gambar yang diisi
+    images = ["https://placehold.co/600x400"];
+  }
+
   return {
-    created: overrides.created.length,
-    updated: Object.keys(overrides.updated).length,
-    deleted: overrides.deleted.length
+    id: id,
+    title: formData.title,
+    name: formData.title,
+    description: formData.description,
+    price: Number(formData.price),
+    category: category,
+    images: images,
+    image: images[0],
   };
 }
 
-export function clearLocalOverrides() {
-  if (!isBrowser()) return;
-  window.localStorage.removeItem(OVERRIDES_STORAGE_KEY);
-  window.dispatchEvent(new Event(PRODUCTS_UPDATED_EVENT));
+// ============================================================
+// FUNGSI API: KATEGORI
+// ============================================================
+
+/**
+ * Mengambil semua kategori.
+ * - Mode MOCK  : kembalikan data dari mockCategories.js
+ * - Mode PLATZI: ambil dari API Platzi Fake Store
+ */
+export async function getCategories() {
+  const source = getProductDataSource();
+
+  if (source === PRODUCT_DATA_SOURCES.MOCK) {
+    return mockCategories;
+  }
+
+  // Kirim request ke API Platzi
+  const response = await fetch(PLATZI_CATEGORIES_URL);
+
+  if (!response.ok) {
+    throw new Error("Gagal mengambil data kategori dari server.");
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+// ============================================================
+// FUNGSI API: PRODUK (CRUD)
+// ============================================================
+
+/**
+ * 1. READ — Mengambil semua produk.
+ * - Mode MOCK  : dari mockStore (data lokal di memory)
+ * - Mode PLATZI: dari API internal Next.js (/api/products)
+ */
+export async function getProducts() {
+  const source = getProductDataSource();
+
+  if (source === PRODUCT_DATA_SOURCES.MOCK) {
+    // Kembalikan salinan agar data asli mockStore tidak bisa diubah dari luar
+    return mockStore.map(function (product) {
+      return { ...product };
+    });
+  }
+
+  const response = await fetch(API_BASE);
+
+  if (!response.ok) {
+    throw new Error("Gagal mengambil daftar produk.");
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+/**
+ * 2. READ — Mengambil satu produk berdasarkan ID.
+ */
+export async function getProductById(id) {
+  const source = getProductDataSource();
+
+  if (source === PRODUCT_DATA_SOURCES.MOCK) {
+    // Cari produk di mockStore secara manual
+    let found = null;
+
+    for (let i = 0; i < mockStore.length; i++) {
+      if (Number(mockStore[i].id) === Number(id)) {
+        found = mockStore[i];
+        break;
+      }
+    }
+
+    if (found === null) {
+      throw new Error("Produk tidak ditemukan.");
+    }
+
+    return { ...found };
+  }
+
+  const response = await fetch(`${API_BASE}/${id}`);
+
+  if (!response.ok) {
+    throw new Error("Gagal mengambil detail produk.");
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+/**
+ * 3. CREATE — Membuat produk baru.
+ * Parameter payload berisi data dari form (title, price, dll).
+ */
+export async function createProduct(payload) {
+  const source = getProductDataSource();
+
+  if (source === PRODUCT_DATA_SOURCES.MOCK) {
+    const newProduct = makeProductFromForm(payload);
+
+    // Tambahkan produk baru di posisi pertama
+    mockStore = [newProduct, ...mockStore];
+
+    return { ...newProduct };
+  }
+
+  const response = await fetch(API_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error("Gagal membuat produk baru.");
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+/**
+ * 4. UPDATE — Memperbarui produk yang sudah ada.
+ * - id     : ID produk yang akan diubah
+ * - payload: data baru dari form
+ */
+export async function updateProduct(id, payload) {
+  const source = getProductDataSource();
+
+  if (source === PRODUCT_DATA_SOURCES.MOCK) {
+    // Cari posisi (index) produk di mockStore
+    let index = -1;
+
+    for (let i = 0; i < mockStore.length; i++) {
+      if (Number(mockStore[i].id) === Number(id)) {
+        index = i;
+        break;
+      }
+    }
+
+    if (index === -1) {
+      throw new Error("Produk tidak ditemukan.");
+    }
+
+    // Buat versi terbaru, pertahankan ID yang lama
+    const updatedProduct = makeProductFromForm(payload, mockStore[index].id);
+    mockStore[index] = updatedProduct;
+
+    return { ...updatedProduct };
+  }
+
+  const response = await fetch(`${API_BASE}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error("Gagal memperbarui produk.");
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+/**
+ * 5. DELETE — Menghapus produk berdasarkan ID.
+ */
+export async function deleteProduct(id) {
+  const source = getProductDataSource();
+
+  if (source === PRODUCT_DATA_SOURCES.MOCK) {
+    const jumlahSebelum = mockStore.length;
+
+    // Buat array baru tanpa produk yang ID-nya cocok
+    mockStore = mockStore.filter(function (item) {
+      return Number(item.id) !== Number(id);
+    });
+
+    if (mockStore.length === jumlahSebelum) {
+      throw new Error("Produk tidak ditemukan.");
+    }
+
+    return null;
+  }
+
+  const response = await fetch(`${API_BASE}/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Gagal menghapus produk.");
+  }
+
+  return null;
 }

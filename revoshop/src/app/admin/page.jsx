@@ -73,17 +73,27 @@ const EMPTY_FORM = {
 };
 
 function buildPayload(form) {
-  const images = form.images
-    .split(/\n|,/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+  // Pisahkan URL gambar berdasarkan baris baru atau koma,
+  // lalu buang spasi dan baris kosong
+  const rawImages = form.images.split(/\n|,/);
+  const images = [];
+  for (let i = 0; i < rawImages.length; i++) {
+    const trimmed = rawImages[i].trim();
+    if (trimmed) {
+      images.push(trimmed);
+    }
+  }
+
+  // Jika tidak ada gambar yang diisi, gunakan gambar placeholder
+  const finalImages =
+    images.length > 0 ? images : ["https://placehold.co/600x400"];
 
   return {
     title: form.title.trim(),
     price: Number(form.price),
     description: form.description.trim(),
     categoryId: Number(form.categoryId),
-    images: images.length > 0 ? images : ["https://placehold.co/600x400"],
+    images: finalImages,
   };
 }
 
@@ -105,8 +115,12 @@ function FieldLabel({ htmlFor, children }) {
 }
 
 function ProductForm({ form, setForm, categories, error, submitting }) {
-  const update = (key) => (event) =>
-    setForm((prev) => ({ ...prev, [key]: event.target.value }));
+  // Memperbarui satu field di dalam objek form saat pengguna mengetik
+  function handleChange(field, value) {
+    setForm(function (prev) {
+      return { ...prev, [field]: value };
+    });
+  }
 
   return (
     <div className="space-y-4">
@@ -123,7 +137,7 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
         <Input
           id="title"
           value={form.title}
-          onChange={update("title")}
+          onChange={(e) => handleChange("title", e.target.value)}
           placeholder="e.g. Classic Sneakers"
           disabled={submitting}
         />
@@ -138,7 +152,7 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
             min="0"
             step="0.01"
             value={form.price}
-            onChange={update("price")}
+            onChange={(e) => handleChange("price", e.target.value)}
             placeholder="29.99"
             disabled={submitting}
           />
@@ -149,7 +163,7 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
           <select
             id="categoryId"
             value={form.categoryId}
-            onChange={update("categoryId")}
+            onChange={(e) => handleChange("categoryId", e.target.value)}
             disabled={submitting}
             className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
           >
@@ -168,7 +182,7 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
         <textarea
           id="description"
           value={form.description}
-          onChange={update("description")}
+          onChange={(e) => handleChange("description", e.target.value)}
           placeholder="Short product description"
           rows={4}
           disabled={submitting}
@@ -181,7 +195,7 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
         <textarea
           id="images"
           value={form.images}
-          onChange={update("images")}
+          onChange={(e) => handleChange("images", e.target.value)}
           placeholder="One URL per line (or comma separated)"
           rows={3}
           disabled={submitting}
@@ -197,21 +211,26 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
 }
 
 export default function AdminPage() {
-  const [authSession, setAuthSession] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-  const [dataSource, setDataSource] = useState(PRODUCT_DATA_SOURCES.PLATZI);
-  const [feedback, setFeedback] = useState(null);
+  // ---- State: Autentikasi ----
+  const [authSession, setAuthSession] = useState(null); // data sesi login
+  const [authChecked, setAuthChecked] = useState(false); // sudah dicek belum?
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState(EMPTY_FORM);
-  const [createError, setCreateError] = useState("");
-  const [creating, setCreating] = useState(false);
+  // ---- State: Data Produk & Kategori ----
+  const [products, setProducts] = useState([]); // daftar produk
+  const [categories, setCategories] = useState([]); // daftar kategori
+  const [loading, setLoading] = useState(true); // sedang loading?
+  const [error, setError] = useState(""); // pesan error
+  const [search, setSearch] = useState(""); // kata kunci pencarian
+  const [dataSource, setDataSource] = useState(PRODUCT_DATA_SOURCES.PLATZI); // sumber data aktif
+  const [feedback, setFeedback] = useState(null); // notifikasi sukses/error
 
+  // ---- State: Form Tambah Produk ----
+  const [createOpen, setCreateOpen] = useState(false); // sheet terbuka/tutup
+  const [createForm, setCreateForm] = useState(EMPTY_FORM); // isi form
+  const [createError, setCreateError] = useState(""); // pesan error form
+  const [creating, setCreating] = useState(false); // sedang menyimpan?
+
+  // ---- State: Form Edit Produk ----
   const [editingProduct, setEditingProduct] = useState(null);
   const [editForm, setEditForm] = useState(EMPTY_FORM);
   const [editError, setEditError] = useState("");
@@ -243,13 +262,16 @@ export default function AdminPage() {
     setDataSource(nextSource);
     setProductDataSource(nextSource);
     setSearch("");
-    setFeedback({
-      type: "success",
-      message:
-        nextSource === PRODUCT_DATA_SOURCES.MOCK
-          ? "Product source switched to Mock Data."
-          : "Product source switched to Platzi Fake Store API.",
-    });
+
+    // Tentukan pesan notifikasi sesuai sumber data yang dipilih
+    let message;
+    if (nextSource === PRODUCT_DATA_SOURCES.MOCK) {
+      message = "Product source switched to Mock Data.";
+    } else {
+      message = "Product source switched to Platzi Fake Store API.";
+    }
+
+    setFeedback({ type: "success", message: message });
   };
 
   useEffect(() => {
@@ -298,15 +320,28 @@ export default function AdminPage() {
   }, [feedback]);
 
   const searchQuery = search.toLowerCase().trim();
-  const filteredProducts = searchQuery
-    ? products.filter((product) =>
-        [product.title, product.category?.name, product.description]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(searchQuery),
-      )
-    : products;
+
+  // Filter produk berdasarkan kata kunci pencarian
+  let filteredProducts;
+  if (!searchQuery) {
+    // Jika tidak ada kata kunci, tampilkan semua produk
+    filteredProducts = products;
+  } else {
+    filteredProducts = products.filter(function (product) {
+      // Gabungkan title, kategori, dan deskripsi menjadi satu teks
+      const title = product.title || "";
+      const categoryName = (product.category && product.category.name) || "";
+      const description = product.description || "";
+      const fullText = (
+        title +
+        " " +
+        categoryName +
+        " " +
+        description
+      ).toLowerCase();
+      return fullText.includes(searchQuery);
+    });
+  }
 
   const handleCreate = async () => {
     const validationError = validate(createForm);
@@ -333,12 +368,23 @@ export default function AdminPage() {
   const openEdit = (product) => {
     setEditingProduct(product);
     setEditError("");
+
+    // Bersihkan setiap URL gambar dan gabungkan dengan baris baru
+    const imageList = product.images || [];
+    const cleanedImages = [];
+    for (let i = 0; i < imageList.length; i++) {
+      cleanedImages.push(cleanImageUrl(imageList[i]));
+    }
+
     setEditForm({
-      title: product.title ?? "",
-      price: product.price?.toString() ?? "",
-      description: product.description ?? "",
-      categoryId: product.category?.id?.toString() ?? "",
-      images: (product.images || []).map(cleanImageUrl).join("\n"),
+      title: product.title || "",
+      price: product.price ? product.price.toString() : "",
+      description: product.description || "",
+      categoryId:
+        product.category && product.category.id
+          ? product.category.id.toString()
+          : "",
+      images: cleanedImages.join("\n"),
     });
   };
 
@@ -402,40 +448,39 @@ export default function AdminPage() {
     );
   }
 
-  if (authSession?.role !== "admin") {
-    return (
-      <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
-        <section className="mx-auto max-w-3xl">
-          <Card className="bg-background text-center shadow-sm">
-            <CardHeader className="items-center p-8">
-              <div className="mb-3 flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-                <Lock aria-hidden="true" className="size-8" />
-              </div>
-              <Badge variant="outline" className="bg-muted/60">
-                Admin Only
-              </Badge>
-              <CardTitle className="mt-3 text-3xl font-bold">
-                This page can only be accessed by Admin.
-              </CardTitle>
-              <CardDescription className="max-w-xl text-base leading-7">
-                Please log in with an admin account to manage RevoShop products.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center gap-3 pb-8">
-              <Button asChild>
-                <Link href="/login">Login as Admin</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/">Back to Home</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </section>
-      </main>
-    );
-  }
+  // Tentukan apakah pengguna saat ini adalah admin
+  const isAdmin = authSession !== null && authSession.role === "admin";
 
-  return (
+  return !isAdmin ? (
+    <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-3xl">
+        <Card className="bg-background text-center shadow-sm">
+          <CardHeader className="items-center p-8">
+            <div className="mb-3 flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <Lock aria-hidden="true" className="size-8" />
+            </div>
+            <Badge variant="outline" className="bg-muted/60">
+              Admin Only
+            </Badge>
+            <CardTitle className="mt-3 text-3xl font-bold">
+              This page can only be accessed by Admin.
+            </CardTitle>
+            <CardDescription className="max-w-xl text-base leading-7">
+              Please log in with an admin account to manage RevoShop products.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center gap-3 pb-8">
+            <Button asChild>
+              <Link href="/login">Login as Admin</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/">Back to Home</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+    </main>
+  ) : (
     <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
       <section className="mx-auto max-w-7xl space-y-6">
         <Card className="bg-background shadow-sm">
@@ -748,3 +793,19 @@ export default function AdminPage() {
     </main>
   );
 }
+
+/*
+  ANALISIS PEMENUHAN PERSYARATAN:
+
+  1. Admin Dashboard (View, Add, Edit, Delete):
+     - View: Sudah diimplementasikan melalui state `products` dan `filteredProducts` yang ditampilkan dalam list card.
+     - Add: Sudah diimplementasikan melalui Sheet "Add Product" dan fungsi `handleCreate` yang memanggil `createProduct`.
+     - Edit: Sudah diimplementasikan melalui Sheet "Edit Product" dan fungsi `handleUpdate` yang memanggil `updateProduct`.
+     - Delete: Sudah diimplementasikan melalui `AlertDialog` dan fungsi `handleDelete` yang memanggil `deleteProduct`.
+
+  2. API Routes untuk CRUD:
+     - Jika menggunakan `PRODUCT_DATA_SOURCES.PLATZI`, aplikasi berinteraksi langsung dengan API eksternal (https://api.escuelajs.co/).
+     - Jika tujuan dari persyaratan ini adalah menggunakan API Internal (Next.js API Routes), maka kode saat ini masih menggunakan layer abstraksi `lib/api.js`.
+     - Untuk memenuhi persyaratan "Implement API Routes for CRUD", Anda perlu memastikan bahwa `lib/api.js` mengarah ke endpoint `app/api/products/...` di project Anda sendiri, bukan ke URL eksternal secara langsung.
+     - Saat ini, persyaratan sudah terpenuhi secara fungsional di sisi UI, namun pastikan `lib/api.js` Anda sudah membungkus request tersebut ke dalam rute API internal Next.js jika itu yang diminta oleh mentor.
+*/

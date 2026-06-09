@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { AUTH_ROLE_COOKIE, AUTH_TOKEN_COOKIE } from "@/lib/auth";
+// Impor dari auth-constants.js, bukan auth.js,
+// karena middleware berjalan di Edge Runtime dan tidak bisa
+// menggunakan kode browser (localStorage, window, dll.)
+import { AUTH_ROLE_COOKIE, AUTH_TOKEN_COOKIE } from "@/lib/auth-constants";
 
 const PROTECTED_ROUTES = ["/", "/cart", "/checkout", "/products", "/promotion"];
 

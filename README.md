@@ -14,9 +14,10 @@ through a small but realistic shopping experience.
 
 ## Overview
 
-RevoShop is a single‑vendor storefront that lets a logged-in visitor browse a product
-catalog, open a product detail page, add items to a cart, claim promotion
-vouchers, and read FAQ / About content. Product data is pulled from the
+RevoShop is a single‑vendor storefront that lets an authenticated visitor
+browse a product catalog, open a product detail page, add items to a cart,
+claim promotion vouchers, complete checkout, and read FAQ / About content.
+Product data is pulled from the
 [Platzi Fake Store API](https://fakeapi.platzi.com/) and the cart state is
 persisted in `localStorage` so the experience survives page reloads.
 
@@ -26,15 +27,21 @@ extend.
 
 ## Features
 
-- **Local Login (`/login`)** — simple private routing with `localStorage`,
-  user/admin role sessions, invalid-login feedback, and automatic redirect
-  from Home to Login when no session exists.
+- **Authentication (`/login`)** — login is handled through internal API
+  routes. The admin account authenticates with the Platzi Fake Store API token
+  endpoint, then stores a protected auth token cookie plus a safe profile
+  snapshot in `localStorage` for UI state.
+- **Protected Routes** — `src/middleware.js` redirects unauthenticated visitors
+  to `/login` and restricts `/admin` to the `admin` role.
 - **Product Listing (Home)** — responsive grid, category sidebar filter,
   search via the `?search=` query param, loading and empty states.
 - **Product Detail (Dynamic Route)** — `/products/[id]` page with image,
   description, category, price, and Add‑to‑Cart action.
 - **Cart Page** — quantity controls, line totals, free‑shipping progress,
-  voucher application (product + shipping vouchers), and persistent storage.
+  voucher application (product + shipping vouchers), persistent storage, and a
+  checkout button.
+- **Checkout Page (`/checkout`)** — protected checkout route with order items,
+  shipping details, payment form, final summary, and order confirmation flow.
 - **Promotions Page** — voucher catalog with category tabs, claim flow that
   writes the voucher to `localStorage` and redirects to the cart.
 - **FAQ Page** — searchable, category‑tabbed accordion of frequent questions.
@@ -42,12 +49,13 @@ extend.
 - **Sticky Navbar** — site search, navigation links, live cart badge
   (updates via a custom `cart-updated` event + the native `storage` event),
   and a mobile sheet menu.
-- **Admin Dashboard (`/admin`)** — full product CRUD against the Platzi
-  Fake Store API: list all products in a responsive card grid, search,
-  create a new product via a side sheet form (title, price, category,
-  description, image URLs), edit any product in the same sheet, and
-  delete with an `AlertDialog` confirmation. Includes role-based access
-  control, loading, validation, and success/error feedback states.
+- **Admin Dashboard (`/admin`)** — product management page for viewing,
+  searching, adding, editing, and deleting products. The dashboard uses a
+  localStorage override layer on top of Platzi product data so changes persist
+  locally during the demo. Includes role-based access control, loading,
+  validation, and success/error feedback states.
+- **Auth API Routes** — `/api/auth/login` and `/api/auth/logout` handle token
+  login, profile lookup, and auth cookie cleanup.
 
 ## Tech Stack
 
@@ -58,6 +66,7 @@ extend.
 | Styling       | Tailwind CSS v4                                                          |
 | UI Primitives | shadcn/ui, Radix UI, lucide‑react icons                                  |
 | Data          | Platzi Fake Store API (`api.escuelajs.co`)                               |
+| Auth          | Next.js API Routes, Platzi auth token endpoint, HTTP-only cookies         |
 | State         | React `useState` / `useEffect` / `useSyncExternalStore` + `localStorage` |
 | Tooling       | ESLint, Bun (or npm)                                                     |
 
@@ -72,7 +81,10 @@ revoshop/
     │   ├── page.js          # Home (product listing)
     │   ├── about/page.jsx
     │   ├── admin/page.jsx           # admin product CRUD dashboard
+    │   ├── api/auth/login/route.js  # login API route
+    │   ├── api/auth/logout/route.js # logout API route
     │   ├── cart/page.jsx
+    │   ├── checkout/page.jsx        # protected checkout page
     │   ├── faq/page.jsx
     │   ├── login/page.jsx           # localStorage-based login page
     │   ├── products/[id]/page.jsx   # dynamic product detail
@@ -82,47 +94,70 @@ revoshop/
     │   ├── ProductCard.jsx
     │   ├── AddToCartButton.jsx
     │   └── ui/              # shadcn/ui primitives
-    └── lib/
-        ├── api.js           # Platzi API client (GET/POST/PUT/DELETE)
-        ├── auth.js          # login credentials + localStorage auth session
+    ├── lib/
+        ├── api.js           # Platzi product fetching + local CRUD overrides
+        ├── auth.js          # auth helpers + localStorage session snapshot
         ├── cart.js          # cart storage keys + helpers
         └── utils.js         # cn(), cleanImageUrl(), formatCurrency()
+    └── middleware.js        # protected-route middleware
 ```
 
 ## Routing & Navigation
 
 - File‑based routing under `src/app/`.
-- Login route: `src/app/login/page.jsx` validates fixed user/admin
-  credentials and stores the session in `localStorage`.
+- Login route: `src/app/login/page.jsx` submits credentials to
+  `src/app/api/auth/login/route.js`.
+- Authenticated routes are protected by `src/middleware.js`. The middleware
+  redirects unauthenticated visitors to `/login` and redirects non-admin users
+  away from `/admin`.
 - Dynamic route: `src/app/products/[id]/page.jsx` reads the `id` with
   `useParams()` from `next/navigation`.
 - Client‑side navigation via `<Link>` from `next/link` in every page,
   card, and navbar entry — no full page reloads.
 - The Home page reads the `?search=` query string with `useSearchParams()`
   (wrapped in `<Suspense>` to satisfy the App Router rules).
-- When there is no local auth session, opening Home redirects the visitor to
+- When there is no auth token cookie, protected pages redirect the visitor to
   `/login`. After a successful login, the user is redirected back to Home.
 
 ## Login Accounts
 
-This project uses a simple local login flow for assignment purposes. No API,
-JWT, or backend token is used; the authenticated session is stored in
-`localStorage` under the key `revoshop-auth-session`.
+This project uses the Platzi Fake Store API auth flow for the admin account.
+The login API route calls `POST /auth/login`, reads the authenticated profile
+from `GET /auth/profile`, stores the access token in an HTTP-only cookie named
+`revoshop-auth-token`, and stores a safe profile snapshot in `localStorage`
+under `revoshop-auth-session` for the Navbar and client-side role UI.
 
-| Role  | Email               | Password   | Access                                      |
-| ----- | ------------------- | ---------- | ------------------------------------------- |
-| User  | `user@example.com`  | `user123`  | Can use the storefront, cart, and vouchers  |
-| Admin | `admin@example.com` | `admin123` | Can access the storefront and `/admin` CRUD |
+| Role     | Email              | Password   | Source                         | Access                                     |
+| -------- | ------------------ | ---------- | ------------------------------ | ------------------------------------------ |
+| Admin    | `admin@mail.com`   | `admin123` | Platzi token + profile API     | Storefront, cart, checkout, `/admin` CRUD |
+| Customer | `nico@gmail.com`   | `1234`     | Local fallback demo account    | Storefront, cart, checkout, vouchers      |
+| Customer | `user@example.com` | `user123`  | Local fallback demo account    | Storefront, cart, checkout, vouchers      |
 
-If a logged-in user account opens `/admin`, the app shows an Admin-only access
-card. Invalid login credentials show a rejection card on the login page.
+The customer fallback exists because the historical Platzi demo credential
+`nico@gmail.com / 1234` currently returns `401 Unauthorized` from the live
+Platzi auth endpoint. It is kept only to demonstrate non-admin customer access
+and admin route restrictions. If a non-admin account opens `/admin`, middleware
+redirects the user away from the admin page. Invalid login credentials show a
+rejection card on the login page.
+
+## Protected Checkout
+
+The checkout flow is split from the cart:
+
+| Route       | Purpose                                      | Access                         |
+| ----------- | -------------------------------------------- | ------------------------------ |
+| `/cart`     | Review items, quantities, vouchers, summary  | Authenticated users            |
+| `/checkout` | Enter shipping/payment details, place order  | Authenticated users only       |
+| `/admin`    | Product management                           | Admin role only                |
+
+Opening `/checkout` without a valid `revoshop-auth-token` cookie redirects to
+`/login`. Completing checkout clears cart and voucher data from `localStorage`.
 
 ## Admin Dashboard
 
-The `/admin` route provides product management with a **localStorage
-override layer** on top of the Platzi Fake Store API. Because the Platzi
-API is a shared sandbox, the override layer makes every change persist
-locally in the browser:
+The `/admin` route provides product management with a **localStorage override
+layer** on top of the Platzi Fake Store API. Because the Platzi API is a shared
+sandbox, the override layer makes every change persist locally in the browser:
 
 | Action | Trigger             | Persistence Behavior                                                        |
 | ------ | ------------------- | --------------------------------------------------------------------------- |
@@ -139,17 +174,18 @@ created/updated products can resolve their category object without
 re‑fetching. A `products-updated` custom event is dispatched whenever
 overrides change so the dashboard summary stays live.
 
-This layering means the dashboard behaves like a real CRUD admin — your
-changes survive page reloads — while still demonstrating the full Platzi
-API surface (`GET / POST / PUT / DELETE /products`) through the
-`request()` helper in [`src/lib/api.js`](revoshop/src/lib/api.js).
+This layering means the dashboard behaves like a CRUD admin and the local
+changes survive page reloads. Product listing and detail data are fetched from
+the Platzi API through [`src/lib/api.js`](revoshop/src/lib/api.js), while
+create/update/delete changes are persisted as local browser overrides for this
+checkpoint.
 
 ## State Management
 
 - `useState` + `useEffect` are used for fetching products, search filters,
   category selection, the Add‑to‑Cart success badge, and the cart count.
-- The Cart page uses `useSyncExternalStore` so it stays in sync with
-  `localStorage` changes coming from other tabs, the Navbar, the
+- The Cart and Checkout pages use `useSyncExternalStore` so they stay in sync
+  with `localStorage` changes coming from other tabs, the Navbar, the
   Add‑to‑Cart button, and the voucher claim flow.
 - All cart and voucher storage keys live in [`src/lib/cart.js`](revoshop/src/lib/cart.js)
   so there is a single source of truth.
@@ -171,6 +207,7 @@ Open <http://localhost:3000> in your browser.
 | Script          | Description                  |
 | --------------- | ---------------------------- |
 | `npm run dev`   | Start the Next.js dev server |
+| `bun run dev`   | Start the Next.js dev server with Bun |
 | `npm run build` | Production build             |
 | `npm run start` | Run the production server    |
 | `npm run lint`  | Lint with ESLint             |
@@ -199,6 +236,10 @@ The image domains used by the Platzi API are already whitelisted in
 ### Cart
 
 ![Cart](revoshop/src/assets/Cart.png)
+
+### Checkout
+
+Checkout is available at `/checkout` after login.
 
 ### Promotions
 
