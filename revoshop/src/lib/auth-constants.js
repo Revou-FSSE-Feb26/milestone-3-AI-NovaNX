@@ -17,6 +17,3 @@ export const AUTH_SESSION_COOKIE = "session";
 
 // Role yang diberi akses ke dashboard admin RevoShop.
 export const ADMIN_ROLE = "admin";
-
-// Role pengguna biasa.
-export const USER_ROLE = "user";

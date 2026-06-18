@@ -31,8 +31,8 @@ extend.
   Handlers backed by the Platzi Fake Store API. The server stores the access
   token and user profile in a secure HttpOnly session cookie. A safe profile
   snapshot is also stored in `localStorage` for reactive client-side UI state.
-- **Protected Routes** — `src/proxy.js` redirects unauthenticated visitors
-  to `/login` and restricts `/admin` to the `admin` role.
+- **Protected Routes** — `src/proxy.js` redirects unauthenticated checkout and
+  admin visitors to `/login`, and restricts `/admin` to the `admin` role.
 - **Product Listing (Home)** — responsive grid, category sidebar filter,
   search via the `?search=` query param, loading and empty states.
 - **Product Detail (Dynamic Route)** — `/products/[id]` page with image,
@@ -108,16 +108,16 @@ revoshop/
 - File‑based routing under `src/app/`.
 - Login route: `src/app/login/page.jsx` submits credentials to
   `src/app/api/auth/login/route.js`.
-- Authenticated routes are protected by `src/proxy.js`. The proxy
-  redirects unauthenticated visitors to `/login` and redirects non-admin users
-  away from `/admin`.
+- `/checkout` and `/admin` are protected by `src/proxy.js`. The proxy redirects
+  unauthenticated visitors to `/login` and redirects non-admin users away from
+  `/admin`.
 - Dynamic route: `src/app/products/[id]/page.jsx` reads the `id` with
   `useParams()` from `next/navigation`.
 - Client‑side navigation via `<Link>` from `next/link` in every page,
   card, and navbar entry — no full page reloads.
 - The Home page reads the `?search=` query string with `useSearchParams()`
   (wrapped in `<Suspense>` to satisfy the App Router rules).
-- When there is no auth token cookie, protected pages redirect the visitor to
+- When there is no session cookie, protected pages redirect the visitor to
   `/login`. After a successful login, the user is redirected back to Home.
 
 ## Login Accounts
@@ -134,9 +134,8 @@ against the Platzi profile endpoint. A safe profile snapshot is also stored in
 | Admin           | `admin`     | `admin`         |
 | Customer        | `customer` or any non-admin role | `user` |
 
-The application normalizes legacy non-admin roles such as `recipe-auditor`
-and `recipe-editor` to `user`. Only the normalized `admin` role can access
-`/admin`; the proxy redirects ordinary users to the storefront.
+Only the normalized `admin` role can access `/admin`; all non-admin Platzi
+roles are treated as `user` and redirected to the storefront.
 
 Demo credentials verified against the Platzi API:
 
@@ -151,7 +150,7 @@ The checkout flow is split from the cart:
 
 | Route       | Purpose                                      | Access                         |
 | ----------- | -------------------------------------------- | ------------------------------ |
-| `/cart`     | Review items, quantities, vouchers, summary  | Authenticated users            |
+| `/cart`     | Review items, quantities, vouchers, summary  | Public                         |
 | `/checkout` | Enter shipping/payment details, place order  | Authenticated users only       |
 | `/admin`    | Product management                           | Admin role only                |
 

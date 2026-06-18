@@ -1,45 +1,30 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { AUTH_SESSION_COOKIE, parseSessionCookie } from "@/lib/session";
+import { AUTH_SESSION_COOKIE } from "@/lib/auth-constants";
 
+// Membaca session cookie dan mengembalikan data user yang sedang login.
 export async function GET() {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get(AUTH_SESSION_COOKIE);
-  const sessionData = parseSessionCookie(sessionCookie?.value);
+  try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get(AUTH_SESSION_COOKIE);
 
-  if (!sessionData) {
-    return NextResponse.json(null, { status: 401 });
+    if (!sessionCookie?.value) {
+      return NextResponse.json(
+        { message: "Not authenticated" },
+        { status: 401 },
+      );
+    }
+
+    const sessionData = JSON.parse(sessionCookie.value);
+
+    return NextResponse.json(sessionData.user);
+  } catch (error) {
+    console.error("Fetch Session Error:", error);
+
+    return NextResponse.json(
+      { message: "Failed to fetch session" },
+      { status: 500 },
+    );
   }
-
-  const profileResponse = await fetch(
-    "https://api.escuelajs.co/api/v1/auth/profile",
-    {
-    headers: {
-      Authorization: `Bearer ${sessionData.token}`,
-    },
-    cache: "no-store",
-    },
-  ).catch(() => null);
-
-  if (!profileResponse?.ok) {
-    cookieStore.set(AUTH_SESSION_COOKIE, "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 0,
-    });
-    return NextResponse.json(null, { status: 401 });
-  }
-
-  const profile = await profileResponse.json();
-  if (
-    String(profile.id) !== String(sessionData.user.id) ||
-    profile.email !== sessionData.user.email
-  ) {
-    return NextResponse.json(null, { status: 401 });
-  }
-
-  return NextResponse.json(sessionData.user);
 }

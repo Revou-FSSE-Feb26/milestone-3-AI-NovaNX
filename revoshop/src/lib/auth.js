@@ -5,9 +5,6 @@ import { AUTH_STORAGE_KEY, AUTH_UPDATED_EVENT } from "@/lib/auth-constants";
 export {
   AUTH_STORAGE_KEY,
   AUTH_UPDATED_EVENT,
-  AUTH_SESSION_COOKIE,
-  ADMIN_ROLE,
-  USER_ROLE,
 } from "@/lib/auth-constants";
 
 // ============================================================

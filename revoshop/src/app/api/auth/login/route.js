@@ -2,91 +2,86 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-constants";
-import { normalizeUserRole } from "@/lib/session";
 
 const PLATZI_API_URL = "https://api.escuelajs.co/api/v1";
-const SESSION_MAX_AGE_SECONDS = 60 * 30;
-
-function buildError(message, status = 400) {
-  return NextResponse.json({ message }, { status });
-}
-
-async function requestJson(path, options = {}) {
-  const response = await fetch(`${PLATZI_API_URL}${path}`, {
-    cache: "no-store",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message = Array.isArray(data?.message)
-      ? data.message.join(", ")
-      : data?.message;
-    throw new Error(message || `Authentication failed (${response.status}).`);
-  }
-
-  return data;
-}
-
-function buildUser(profile) {
-  return {
-    id: profile.id,
-    email: profile.email,
-    name: profile.name,
-    avatar: profile.avatar,
-    role: normalizeUserRole(profile.role),
-  };
-}
 
 export async function POST(request) {
   try {
     const { email, password } = await request.json();
-    const normalizedEmail = email?.trim().toLowerCase();
 
-    if (!normalizedEmail || !password) {
-      return buildError("Email and password are required.");
+    if (!email || !password) {
+      return NextResponse.json(
+        { message: "Email and password are required." },
+        { status: 400 },
+      );
     }
 
-    const tokens = await requestJson("/auth/login", {
+    const loginResponse = await fetch(`${PLATZI_API_URL}/auth/login`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: normalizedEmail,
+        email: email.trim().toLowerCase(),
         password,
       }),
+      cache: "no-store",
     });
 
-    if (!tokens?.access_token) {
-      return buildError("The authentication server did not return a token.", 502);
+    const loginData = await loginResponse.json();
+
+    if (!loginResponse.ok) {
+      return NextResponse.json(
+        { message: loginData.message || "Invalid email or password." },
+        { status: loginResponse.status },
+      );
     }
 
-    const profile = await requestJson("/auth/profile", {
+    // Fetch user profile using the access token
+    const profileResponse = await fetch(`${PLATZI_API_URL}/auth/profile`, {
       headers: {
-        Authorization: `Bearer ${tokens.access_token}`,
+        Authorization: `Bearer ${loginData.access_token}`, // Use the access token for authentication
       },
+      cache: "no-store",
     });
 
-    const authUser = buildUser(profile);
-    const sessionData = {
-      user: authUser,
-      token: tokens.access_token,
+    const profile = await profileResponse.json();
+
+    if (!profileResponse.ok) {
+      return NextResponse.json(
+        { message: profile.message || "Failed to fetch user profile." },
+        { status: profileResponse.status },
+      );
+    }
+
+    const authUser = {
+      id: profile.id,
+      email: profile.email,
+      name: profile.name,
+      avatar: profile.avatar,
+      role: profile.role === "admin" ? "admin" : "user", // map the role to either "admin" or "user"
     };
 
+    const sessionData = { // Store the user data and access token in the session
+      user: authUser,
+      token: loginData.access_token,
+    };
+
+    // Set the session cookie with the user data and access token
     const cookieStore = await cookies();
     cookieStore.set(AUTH_SESSION_COOKIE, JSON.stringify(sessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: SESSION_MAX_AGE_SECONDS,
+      maxAge: 60 * 30,
     });
 
     return NextResponse.json({ user: authUser });
   } catch (error) {
-    return buildError(error.message || "Invalid email or password.", 401);
+    console.error("Login error:", error);
+
+    return NextResponse.json(
+      { message: "An unexpected authentication error occurred." },
+      { status: 500 },
+    );
   }
 }

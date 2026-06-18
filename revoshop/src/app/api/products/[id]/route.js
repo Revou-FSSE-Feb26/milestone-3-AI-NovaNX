@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { mockProducts } from "@/data/mockProducts";
 import {
   AUTH_SESSION_COOKIE,
   isAdminSession,
@@ -21,10 +22,31 @@ function isAdminRequest(request) {
 export async function GET(request, { params }) {
   const { id } = await params;
 
-  const res = await fetch(`${BASE_URL}/products/${id}`);
-  const data = await res.json();
+  try {
+    const res = await fetch(`${BASE_URL}/products/${id}`, {
+      cache: "no-store",
+    });
 
-  return NextResponse.json(data);
+    if (res.ok) {
+      const data = await res.json();
+      return NextResponse.json(data);
+    }
+  } catch {
+    // Lanjutkan ke mock data jika API Platzi tidak dapat dijangkau.
+  }
+
+  const fallbackProduct = mockProducts.find(
+    (product) => Number(product.id) === Number(id),
+  );
+
+  if (fallbackProduct) {
+    return NextResponse.json(fallbackProduct);
+  }
+
+  return NextResponse.json(
+    { message: "Product not found in Platzi or mock data." },
+    { status: 404 },
+  );
 }
 
 // Fungsi untuk update produk

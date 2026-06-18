@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-constants";
 
 export async function POST() {
+  try { 
   const cookieStore = await cookies();
   cookieStore.set(AUTH_SESSION_COOKIE, "", {
     httpOnly: true,
@@ -13,5 +14,12 @@ export async function POST() {
     maxAge: 0,
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout API Error:", error);
+    return NextResponse.json(
+      { error: "Failed to log out cleanly" },
+      { status: 500 }
+    );
+  }
 }

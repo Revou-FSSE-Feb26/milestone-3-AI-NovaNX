@@ -1,62 +1,32 @@
 import { NextResponse } from "next/server";
 
-import {
-  AUTH_SESSION_COOKIE,
-  isAdminSession,
-  parseSessionCookie,
-} from "@/lib/session";
-
-const PROTECTED_ROUTES = ["/", "/cart", "/checkout", "/products", "/promotion"];
-
-function redirectTo(pathname, request) {
-  return NextResponse.redirect(new URL(pathname, request.url));
-}
-
 export function proxy(request) {
   const { pathname } = request.nextUrl;
-  const session = parseSessionCookie(
-    request.cookies.get(AUTH_SESSION_COOKIE)?.value,
-  );
-  const isLoggedIn = Boolean(session);
-  const isLoginPage = pathname === "/login";
-  const isAdminPage = pathname.startsWith("/admin");
-  const isProtectedPage = PROTECTED_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
+  const sessionCookie = request.cookies.get("session")?.value;
 
-  if (isLoginPage && isLoggedIn) {
-    return redirectTo("/", request);
+  if (!sessionCookie) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (isLoginPage) {
+  try {
+    const sessionData = JSON.parse(sessionCookie);
+    const user = sessionData.user;
+
+    if (pathname.startsWith("/admin") && user?.role !== "admin") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
     return NextResponse.next();
+  } catch (error) {
+    console.error("Proxy authentication error:", error);
+
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.cookies.delete("session");
+
+    return response;
   }
-
-  if (isAdminPage) {
-    if (!isLoggedIn) {
-      return redirectTo("/login", request);
-    }
-
-    if (!isAdminSession(session)) {
-      return redirectTo("/", request);
-    }
-  }
-
-  if (isProtectedPage && !isLoggedIn) {
-    return redirectTo("/login", request);
-  }
-
-  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/",
-    "/admin/:path*",
-    "/cart/:path*",
-    "/checkout/:path*",
-    "/products/:path*",
-    "/promotion/:path*",
-    "/login",
-  ],
+  matcher: ["/checkout/:path*", "/admin/:path*"],
 };

@@ -10,6 +10,7 @@ const API_BASE = "/api/products";
 
 // URL untuk mengambil daftar kategori dari API Platzi Fake Store
 const PLATZI_CATEGORIES_URL = "https://api.escuelajs.co/api/v1/categories";
+const PLATZI_PRODUCTS_URL = "https://api.escuelajs.co/api/v1/products";
 
 // Nama kunci untuk menyimpan pilihan sumber data di localStorage
 const DATA_SOURCE_KEY = "revoshop:product-data-source";
@@ -90,6 +91,10 @@ function findCategoryById(categoryId) {
     }
   }
   return null;
+}
+
+function findMockProductById(id) {
+  return mockStore.find((product) => Number(product.id) === Number(id)) || null;
 }
 
 /**
@@ -190,15 +195,7 @@ export async function getProductById(id) {
   const source = getProductDataSource();
 
   if (source === PRODUCT_DATA_SOURCES.MOCK) {
-    // Cari produk di mockStore secara manual
-    let found = null;
-
-    for (let i = 0; i < mockStore.length; i++) {
-      if (Number(mockStore[i].id) === Number(id)) {
-        found = mockStore[i];
-        break;
-      }
-    }
+    const found = findMockProductById(id);
 
     if (found === null) {
       throw new Error("Produk tidak ditemukan.");
@@ -207,14 +204,29 @@ export async function getProductById(id) {
     return { ...found };
   }
 
-  const response = await fetch(`${API_BASE}/${id}`);
+  try {
+    // Server Component memerlukan URL absolut. Di browser, request tetap
+    // diarahkan melalui API Route internal agar satu origin.
+    const productUrl =
+      typeof window === "undefined"
+        ? `${PLATZI_PRODUCTS_URL}/${id}`
+        : `${API_BASE}/${id}`;
+    const response = await fetch(productUrl, { cache: "no-store" });
 
-  if (!response.ok) {
-    throw new Error("Gagal mengambil detail produk.");
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch {
+    // Jika Platzi sedang bermasalah, lanjutkan ke fallback mock.
   }
 
-  const data = await response.json();
-  return data;
+  const fallbackProduct = findMockProductById(id);
+
+  if (fallbackProduct) {
+    return { ...fallbackProduct };
+  }
+
+  throw new Error("Produk tidak ditemukan di Platzi maupun mock data.");
 }
 
 /**
