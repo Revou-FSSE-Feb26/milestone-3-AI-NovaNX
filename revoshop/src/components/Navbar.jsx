@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LogIn,
@@ -32,10 +32,14 @@ import {
 import { CART_UPDATED_EVENT, getCartItemCount } from "@/lib/cart";
 import {
   clearAuthSession,
+  getCurrentUser,
   getAuthSessionServerSnapshot,
   getAuthSessionSnapshot,
-  subscribeToAuthSession } from
+  removeStoredAuthSession,
+  subscribeToAuthSession,
+  writeAuthSession } from
 "@/lib/auth";
+import { ADMIN_ROLE } from "@/lib/auth-constants";
 
 const navLinks = [
 { href: "/", label: "Home" },
@@ -81,7 +85,24 @@ export default function Navbar() {
     [authSessionSnapshot]
   );
   const isLoginPage = pathname === "/login";
-  const isNonAdminRole = authSession && authSession.role !== "admin";
+  const isNonAdminRole = authSession && authSession.role !== ADMIN_ROLE;
+
+  useEffect(() => {
+    async function syncSession() {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          writeAuthSession(user);
+        } else {
+          removeStoredAuthSession();
+        }
+      } catch {
+        removeStoredAuthSession();
+      }
+    }
+
+    syncSession();
+  }, []);
 
   const isActive = (href) => {
     if (href === "/") {

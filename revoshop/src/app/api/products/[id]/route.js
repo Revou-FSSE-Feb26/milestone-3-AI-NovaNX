@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { AUTH_ROLE_COOKIE, AUTH_TOKEN_COOKIE } from "@/lib/auth-constants";
+import {
+  AUTH_SESSION_COOKIE,
+  isAdminSession,
+  parseSessionCookie,
+} from "@/lib/session";
 
 const BASE_URL = "https://api.escuelajs.co/api/v1";
 
@@ -7,9 +11,10 @@ const BASE_URL = "https://api.escuelajs.co/api/v1";
 // Middleware sudah melindungi halaman /admin di browser, tapi API route
 // perlu dicek sendiri karena endpoint bisa dipanggil langsung tanpa browser.
 function isAdminRequest(request) {
-  const token = request.cookies.get(AUTH_TOKEN_COOKIE)?.value;
-  const role = request.cookies.get(AUTH_ROLE_COOKIE)?.value;
-  return Boolean(token) && role === "admin";
+  const session = parseSessionCookie(
+    request.cookies.get(AUTH_SESSION_COOKIE)?.value,
+  );
+  return isAdminSession(session);
 }
 
 // Fungsi untuk ambil detail produk berdasarkan ID

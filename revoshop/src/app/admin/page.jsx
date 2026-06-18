@@ -61,7 +61,13 @@ import {
   setProductDataSource,
   updateProduct,
 } from "@/lib/api";
-import { readAuthSession, subscribeToAuthSession } from "@/lib/auth";
+import {
+  getCurrentUser,
+  readAuthSession,
+  subscribeToAuthSession,
+  writeAuthSession,
+} from "@/lib/auth";
+import { ADMIN_ROLE } from "@/lib/auth-constants";
 import { cleanImageUrl, formatCurrency } from "@/lib/utils";
 
 const EMPTY_FORM = {
@@ -239,7 +245,7 @@ export default function AdminPage() {
   const [deletingId, setDeletingId] = useState(null);
 
   async function loadData() {
-    if (authSession?.role !== "admin") return;
+    if (authSession?.role !== ADMIN_ROLE) return;
 
     try {
       setLoading(true);
@@ -275,8 +281,12 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    function checkAccess() {
-      setAuthSession(readAuthSession());
+    async function checkAccess() {
+      const user = await getCurrentUser().catch(() => null);
+      if (user) {
+        writeAuthSession(user);
+      }
+      setAuthSession(user);
       setDataSource(getProductDataSource());
       setAuthChecked(true);
     }
@@ -291,7 +301,7 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (authSession?.role !== "admin") return;
+    if (authSession?.role !== ADMIN_ROLE) return;
 
     async function fetchProducts() {
       try {
@@ -449,7 +459,7 @@ export default function AdminPage() {
   }
 
   // Tentukan apakah pengguna saat ini adalah admin
-  const isAdmin = authSession !== null && authSession.role === "admin";
+  const isAdmin = authSession !== null && authSession.role === ADMIN_ROLE;
 
   return !isAdmin ? (
     <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">

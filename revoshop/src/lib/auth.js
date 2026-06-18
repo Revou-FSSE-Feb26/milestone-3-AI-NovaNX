@@ -5,8 +5,9 @@ import { AUTH_STORAGE_KEY, AUTH_UPDATED_EVENT } from "@/lib/auth-constants";
 export {
   AUTH_STORAGE_KEY,
   AUTH_UPDATED_EVENT,
-  AUTH_TOKEN_COOKIE,
-  AUTH_ROLE_COOKIE,
+  AUTH_SESSION_COOKIE,
+  ADMIN_ROLE,
+  USER_ROLE,
 } from "@/lib/auth-constants";
 
 // ============================================================
@@ -32,6 +33,28 @@ export async function loginWithCredentials(email, password) {
     const errorMessage =
       body && body.message ? body.message : "Email atau password salah.";
     throw new Error(errorMessage);
+  }
+
+  return body;
+}
+
+/**
+ * Mengambil user aktif dari HttpOnly session cookie melalui Route Handler.
+ */
+export async function getCurrentUser() {
+  const response = await fetch("/api/auth/me", {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (response.status === 401) {
+    return null;
+  }
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(body?.message || "Failed to read authentication session.");
   }
 
   return body;
@@ -96,6 +119,15 @@ export function writeAuthSession(authResult) {
   window.dispatchEvent(new Event(AUTH_UPDATED_EVENT));
 }
 
+export function removeStoredAuthSession() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  window.dispatchEvent(new Event(AUTH_UPDATED_EVENT));
+}
+
 /**
  * Menghapus sesi login dari localStorage dan logout dari server.
  * Juga mengirim event agar komponen React bisa ikut diperbarui.
@@ -105,13 +137,10 @@ export function clearAuthSession() {
     return;
   }
 
-  localStorage.removeItem(AUTH_STORAGE_KEY);
+  removeStoredAuthSession();
 
   // Kirim request logout ke server untuk menghapus cookie
   fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-
-  // Beritahu komponen lain bahwa pengguna telah logout
-  window.dispatchEvent(new Event(AUTH_UPDATED_EVENT));
 }
 
 /**

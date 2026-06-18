@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
-// Impor dari auth-constants.js, bukan auth.js,
-// karena middleware berjalan di Edge Runtime dan tidak bisa
-// menggunakan kode browser (localStorage, window, dll.)
-import { AUTH_ROLE_COOKIE, AUTH_TOKEN_COOKIE } from "@/lib/auth-constants";
+import {
+  AUTH_SESSION_COOKIE,
+  isAdminSession,
+  parseSessionCookie,
+} from "@/lib/session";
 
 const PROTECTED_ROUTES = ["/", "/cart", "/checkout", "/products", "/promotion"];
 
@@ -11,11 +12,12 @@ function redirectTo(pathname, request) {
   return NextResponse.redirect(new URL(pathname, request.url));
 }
 
-export function middleware(request) {
+export function proxy(request) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get(AUTH_TOKEN_COOKIE)?.value;
-  const role = request.cookies.get(AUTH_ROLE_COOKIE)?.value;
-  const isLoggedIn = Boolean(token);
+  const session = parseSessionCookie(
+    request.cookies.get(AUTH_SESSION_COOKIE)?.value,
+  );
+  const isLoggedIn = Boolean(session);
   const isLoginPage = pathname === "/login";
   const isAdminPage = pathname.startsWith("/admin");
   const isProtectedPage = PROTECTED_ROUTES.some(
@@ -35,7 +37,7 @@ export function middleware(request) {
       return redirectTo("/login", request);
     }
 
-    if (role !== "admin") {
+    if (!isAdminSession(session)) {
       return redirectTo("/", request);
     }
   }

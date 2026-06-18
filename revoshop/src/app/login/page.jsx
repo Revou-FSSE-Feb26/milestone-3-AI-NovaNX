@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  getCurrentUser,
   loginWithCredentials,
-  readAuthSession,
   writeAuthSession,
 } from "@/lib/auth";
 
@@ -34,11 +34,15 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const session = readAuthSession();
-
-    if (session) {
-      router.replace("/");
+    async function redirectAuthenticatedUser() {
+      const user = await getCurrentUser().catch(() => null);
+      if (user) {
+        writeAuthSession(user);
+        router.replace("/");
+      }
     }
+
+    redirectAuthenticatedUser();
   }, [router]);
 
   function handleInputChange(event) {
@@ -127,7 +131,7 @@ export default function LoginPage() {
                     type="email"
                     value={form.email}
                     onChange={handleInputChange}
-                    placeholder="nico@gmail.com"
+                    placeholder="admin@mail.com"
                     autoComplete="email"
                     disabled={isSubmitting}
                     required

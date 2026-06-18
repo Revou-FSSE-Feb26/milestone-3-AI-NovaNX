@@ -27,11 +27,11 @@ extend.
 
 ## Features
 
-- **Authentication (`/login`)** — login is handled through internal API
-  routes. The admin account authenticates with the Platzi Fake Store API token
-  endpoint, then stores a protected auth token cookie plus a safe profile
-  snapshot in `localStorage` for UI state.
-- **Protected Routes** — `src/middleware.js` redirects unauthenticated visitors
+- **Authentication (`/login`)** — login is handled through internal API Route
+  Handlers backed by the Platzi Fake Store API. The server stores the access
+  token and user profile in a secure HttpOnly session cookie. A safe profile
+  snapshot is also stored in `localStorage` for reactive client-side UI state.
+- **Protected Routes** — `src/proxy.js` redirects unauthenticated visitors
   to `/login` and restricts `/admin` to the `admin` role.
 - **Product Listing (Home)** — responsive grid, category sidebar filter,
   search via the `?search=` query param, loading and empty states.
@@ -54,8 +54,9 @@ extend.
   localStorage override layer on top of Platzi product data so changes persist
   locally during the demo. Includes role-based access control, loading,
   validation, and success/error feedback states.
-- **Auth API Routes** — `/api/auth/login` and `/api/auth/logout` handle token
-  login, profile lookup, and auth cookie cleanup.
+- **Auth API Routes** — `/api/auth/login`, `/api/auth/me`, and
+  `/api/auth/logout` handle token login, profile validation, session lookup,
+  and cookie cleanup.
 
 ## Tech Stack
 
@@ -66,7 +67,7 @@ extend.
 | Styling       | Tailwind CSS v4                                                          |
 | UI Primitives | shadcn/ui, Radix UI, lucide‑react icons                                  |
 | Data          | Platzi Fake Store API (`api.escuelajs.co`)                               |
-| Auth          | Next.js API Routes, Platzi auth token endpoint, HTTP-only cookies         |
+| Auth          | Next.js Route Handlers, Platzi Auth, HTTP-only cookies                     |
 | State         | React `useState` / `useEffect` / `useSyncExternalStore` + `localStorage` |
 | Tooling       | ESLint, Bun (or npm)                                                     |
 
@@ -99,7 +100,7 @@ revoshop/
         ├── auth.js          # auth helpers + localStorage session snapshot
         ├── cart.js          # cart storage keys + helpers
         └── utils.js         # cn(), cleanImageUrl(), formatCurrency()
-    └── middleware.js        # protected-route middleware
+    └── proxy.js             # protected-route proxy
 ```
 
 ## Routing & Navigation
@@ -107,7 +108,7 @@ revoshop/
 - File‑based routing under `src/app/`.
 - Login route: `src/app/login/page.jsx` submits credentials to
   `src/app/api/auth/login/route.js`.
-- Authenticated routes are protected by `src/middleware.js`. The middleware
+- Authenticated routes are protected by `src/proxy.js`. The proxy
   redirects unauthenticated visitors to `/login` and redirects non-admin users
   away from `/admin`.
 - Dynamic route: `src/app/products/[id]/page.jsx` reads the `id` with
@@ -121,24 +122,28 @@ revoshop/
 
 ## Login Accounts
 
-This project uses the Platzi Fake Store API auth flow for the admin account.
-The login API route calls `POST /auth/login`, reads the authenticated profile
-from `GET /auth/profile`, stores the access token in an HTTP-only cookie named
-`revoshop-auth-token`, and stores a safe profile snapshot in `localStorage`
-under `revoshop-auth-session` for the Navbar and client-side role UI.
+This project uses the Platzi Fake Store API for user authentication. The login
+Route Handler calls `POST /auth/login`, fetches the authenticated user through
+`GET /auth/profile`, then stores the access token and safe user profile in an
+HTTP-only cookie named `session`. `GET /api/auth/me` validates the stored token
+against the Platzi profile endpoint. A safe profile snapshot is also stored in
+`localStorage` under `revoshop-auth-session` for client-side role UI.
 
-| Role     | Email              | Password   | Source                         | Access                                     |
-| -------- | ------------------ | ---------- | ------------------------------ | ------------------------------------------ |
-| Admin    | `admin@mail.com`   | `admin123` | Platzi token + profile API     | Storefront, cart, checkout, `/admin` CRUD |
-| Customer | `nico@gmail.com`   | `1234`     | Local fallback demo account    | Storefront, cart, checkout, vouchers      |
-| Customer | `user@example.com` | `user123`  | Local fallback demo account    | Storefront, cart, checkout, vouchers      |
+| RevoShop access | Platzi role | Normalized role |
+| --------------- | ----------- | --------------- |
+| Admin           | `admin`     | `admin`         |
+| Customer        | `customer` or any non-admin role | `user` |
 
-The customer fallback exists because the historical Platzi demo credential
-`nico@gmail.com / 1234` currently returns `401 Unauthorized` from the live
-Platzi auth endpoint. It is kept only to demonstrate non-admin customer access
-and admin route restrictions. If a non-admin account opens `/admin`, middleware
-redirects the user away from the admin page. Invalid login credentials show a
-rejection card on the login page.
+The application normalizes legacy non-admin roles such as `recipe-auditor`
+and `recipe-editor` to `user`. Only the normalized `admin` role can access
+`/admin`; the proxy redirects ordinary users to the storefront.
+
+Demo credentials verified against the Platzi API:
+
+| Access | Email | Password |
+| ------ | ----- | -------- |
+| Admin | `admin@mail.com` | `admin123` |
+| User | `john@mail.com` | `changeme` |
 
 ## Protected Checkout
 
@@ -150,7 +155,7 @@ The checkout flow is split from the cart:
 | `/checkout` | Enter shipping/payment details, place order  | Authenticated users only       |
 | `/admin`    | Product management                           | Admin role only                |
 
-Opening `/checkout` without a valid `revoshop-auth-token` cookie redirects to
+Opening `/checkout` without a valid `session` cookie redirects to
 `/login`. Completing checkout clears cart and voucher data from `localStorage`.
 
 ## Admin Dashboard

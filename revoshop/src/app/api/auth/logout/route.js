@@ -1,10 +1,17 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { AUTH_SESSION_COOKIE } from "@/lib/auth-constants";
+
 export async function POST() {
-  const response = NextResponse.json({ ok: true });
+  const cookieStore = await cookies();
+  cookieStore.set(AUTH_SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
 
-  response.cookies.delete("revoshop-auth-token");
-  response.cookies.delete("revoshop-auth-role");
-
-  return response;
+  return NextResponse.json({ success: true });
 }

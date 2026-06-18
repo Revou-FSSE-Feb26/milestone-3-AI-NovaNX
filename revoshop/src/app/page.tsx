@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Filter, PackageSearch, ShoppingBag } from "lucide-react";
 
 import ProductCard from "@/components/ProductCard";
@@ -16,7 +16,6 @@ import {
   CardTitle } from
 "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { readAuthSession } from "@/lib/auth";
 
 
 type ProductCategory = {
@@ -48,7 +47,6 @@ function isProductArray(data: unknown): data is Product[] {
 
 
 function HomeContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search")?.toLowerCase().trim() || "";
 
@@ -95,13 +93,6 @@ function HomeContent() {
 
   useEffect(() => {
     async function initializePage() {
-      const session = readAuthSession();
-
-      if (!session) {
-        router.replace("/login");
-        return;
-      }
-
       try {
 
         const data = await getProducts();
@@ -114,7 +105,7 @@ function HomeContent() {
     }
 
     initializePage();
-  }, [router]);
+  }, []);
 
   if (loading) {
     return <p className="p-8">Loading products...</p>;
