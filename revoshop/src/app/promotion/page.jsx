@@ -25,6 +25,7 @@ import {
 "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { useCart } from "@/context/CartContext";
 import {
   Sheet,
   SheetClose,
@@ -36,11 +37,6 @@ import {
   SheetTrigger } from
 "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  PRODUCT_VOUCHER_STORAGE_KEY,
-  SHIPPING_VOUCHER_STORAGE_KEY,
-  VOUCHER_UPDATED_EVENT } from
-"@/lib/cart";
 
 const promotions = [
 {
@@ -178,15 +174,10 @@ function PromotionGrid({ items }) {
 
 function PromotionCard({ promotion }) {
   const router = useRouter();
+  const { applyVoucher } = useCart();
 
   const handleClaimVoucher = () => {
-    const storageKey =
-    promotion.discountType === "free-shipping" ?
-    SHIPPING_VOUCHER_STORAGE_KEY :
-    PRODUCT_VOUCHER_STORAGE_KEY;
-
-    localStorage.setItem(storageKey, JSON.stringify(promotion));
-    window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
+    applyVoucher(promotion);
     router.push("/cart");
   };
 

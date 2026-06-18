@@ -1,60 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Check, ShoppingCart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cleanImageUrl } from "@/lib/utils";
-import { normalizeCartCategory, readCartItems, writeCartItems } from "@/lib/cart";
-
-const ADDED_FEEDBACK_DURATION_MS = 2000;
+import { useCart } from "@/context/CartContext";
 
 export default function AddToCartButton({ product }) {
 
-  const [added, setAdded] = useState(false);
-
-  useEffect(() => {
-    if (!added) {
-      return;
-    }
-
-    const timeoutId = setTimeout(
-      () => setAdded(false),
-      ADDED_FEEDBACK_DURATION_MS
-    );
-
-    return () => clearTimeout(timeoutId);
-  }, [added]);
+  const { addToCart, cartNotification } = useCart();
 
   const handleAddToCart = () => {
     if (!product) {
       return;
     }
 
-    const cartItems = readCartItems();
-    const existingItem = cartItems.find((item) => item.id === product.id);
-
-    const updatedCart = existingItem ?
-    cartItems.map((item) =>
-    item.id === product.id ?
-    { ...item, quantity: item.quantity + 1 } :
-    item
-    ) :
-    [
-    ...cartItems,
-    {
-      id: product.id,
-      title: product.name || product.title,
-      price: product.price,
-      category: normalizeCartCategory(product.category?.name),
-      image: cleanImageUrl(product.image || product.images?.[0]),
-      quantity: 1
-    }];
-
-
-    writeCartItems(updatedCart);
-    setAdded(true);
+    addToCart(product);
   };
 
   return (
@@ -64,11 +25,11 @@ export default function AddToCartButton({ product }) {
         Add to Cart
       </Button>
 
-      {added &&
+      {cartNotification &&
 
       <Badge className="mt-3 gap-1.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
           <Check aria-hidden="true" className="size-3.5" />
-          Product added to cart.
+          {cartNotification}
         </Badge>
       }
     </div>);

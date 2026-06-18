@@ -29,7 +29,7 @@ import {
   SheetTitle,
   SheetTrigger } from
 "@/components/ui/sheet";
-import { CART_UPDATED_EVENT, getCartItemCount } from "@/lib/cart";
+import { useCart } from "@/context/CartContext";
 import {
   clearAuthSession,
   getCurrentUser,
@@ -49,32 +49,10 @@ const navLinks = [
 { href: "/admin", label: "Admin" }];
 
 
-function subscribeToCartItemCount(callback) {
-  window.addEventListener(CART_UPDATED_EVENT, callback);
-  window.addEventListener("storage", callback);
-
-  return () => {
-    window.removeEventListener(CART_UPDATED_EVENT, callback);
-    window.removeEventListener("storage", callback);
-  };
-}
-
-function getCartItemCountSnapshot() {
-  return getCartItemCount();
-}
-
-function getCartItemCountServerSnapshot() {
-  return 0;
-}
-
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const cartItemCount = useSyncExternalStore(
-    subscribeToCartItemCount,
-    getCartItemCountSnapshot,
-    getCartItemCountServerSnapshot
-  );
+  const { cartItemCount } = useCart();
   const authSessionSnapshot = useSyncExternalStore(
     subscribeToAuthSession,
     getAuthSessionSnapshot,

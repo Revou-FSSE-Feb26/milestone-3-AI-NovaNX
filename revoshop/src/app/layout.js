@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
+import { CartProvider } from "@/context/CartContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,9 +27,10 @@ export default function RootLayout({ children }) {
       suppressHydrationWarning>
       
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        {}
-        <Navbar />
-        <main className="flex-1">{children}</main>
+        <CartProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+        </CartProvider>
       </body>
     </html>);
 

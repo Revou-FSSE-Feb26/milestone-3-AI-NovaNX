@@ -37,8 +37,8 @@ extend.
   search via the `?search=` query param, loading and empty states.
 - **Product Detail (Dynamic Route)** — `/products/[id]` page with image,
   description, category, price, and Add‑to‑Cart action.
-- **Cart Page** — quantity controls, line totals, free‑shipping progress,
-  voucher application (product + shipping vouchers), persistent storage, and a
+- **Cart Page** — React Context-powered quantity controls, line totals,
+  free‑shipping progress, voucher application, persistent storage, and a
   checkout button.
 - **Checkout Page (`/checkout`)** — protected checkout route with order items,
   shipping details, payment form, final summary, and order confirmation flow.
@@ -68,7 +68,7 @@ extend.
 | UI Primitives | shadcn/ui, Radix UI, lucide‑react icons                                  |
 | Data          | Platzi Fake Store API (`api.escuelajs.co`)                               |
 | Auth          | Next.js Route Handlers, Platzi Auth, HTTP-only cookies                     |
-| State         | React `useState` / `useEffect` / `useSyncExternalStore` + `localStorage` |
+| State         | React Context, `useReducer`, `useEffect`, `useMemo` + `localStorage`     |
 | Tooling       | ESLint, Bun (or npm)                                                     |
 
 ## Project Structure
@@ -95,6 +95,8 @@ revoshop/
     │   ├── ProductCard.jsx
     │   ├── AddToCartButton.jsx
     │   └── ui/              # shadcn/ui primitives
+    ├── context/
+    │   └── CartContext.jsx  # global cart and voucher state
     ├── lib/
         ├── api.js           # Platzi product fetching + local CRUD overrides
         ├── auth.js          # auth helpers + localStorage session snapshot
@@ -186,13 +188,19 @@ checkpoint.
 
 ## State Management
 
-- `useState` + `useEffect` are used for fetching products, search filters,
-  category selection, the Add‑to‑Cart success badge, and the cart count.
-- The Cart and Checkout pages use `useSyncExternalStore` so they stay in sync
-  with `localStorage` changes coming from other tabs, the Navbar, the
-  Add‑to‑Cart button, and the voucher claim flow.
-- All cart and voucher storage keys live in [`src/lib/cart.js`](revoshop/src/lib/cart.js)
-  so there is a single source of truth.
+- `CartProvider` and `useCart()` provide global cart and voucher state to the
+  Navbar, product detail, promotions, cart, and checkout pages.
+- A reducer handles explicit cart actions such as `ADD_ITEM`, `REMOVE_ITEM`,
+  `UPDATE_QUANTITY`, `CLEAR_CART`, voucher actions, and checkout cleanup.
+- Cart actions include add, update quantity, remove, clear, apply/remove
+  voucher, and clear checkout.
+- The add-to-cart notification is also managed by the Context and clears
+  automatically after two seconds.
+- The Context persists its state in `localStorage` and listens to the native
+  `storage` event to synchronize changes between browser tabs.
+- `useMemo` and memoized Context actions reduce unnecessary calculations and
+  avoid recreating action functions on each render.
+- All cart and voucher storage keys live in [`src/lib/cart.js`](revoshop/src/lib/cart.js).
 
 ## Getting Started
 

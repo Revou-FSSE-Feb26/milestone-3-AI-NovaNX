@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   BadgePercent,
@@ -24,66 +24,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import {
-  CART_STORAGE_KEY,
-  CART_UPDATED_EVENT,
-  LEGACY_VOUCHER_STORAGE_KEY,
-  PRODUCT_VOUCHER_STORAGE_KEY,
-  SHIPPING_VOUCHER_STORAGE_KEY,
-  VOUCHER_UPDATED_EVENT,
-  isVoucherCategoryEligible,
-  writeCartItems,
-} from "@/lib/cart";
+import { useCart } from "@/context/CartContext";
+import { isVoucherCategoryEligible } from "@/lib/cart";
 import { formatCurrency } from "@/lib/utils";
 
 const FREE_SHIPPING_THRESHOLD = 750;
-const EMPTY_CHECKOUT_DATA = {
-  cartItems: [],
-  selectedProductVoucher: null,
-  selectedShippingVoucher: null,
-};
-
-function readJsonStorage(key, fallback) {
-  if (typeof window === "undefined") {
-    return fallback;
-  }
-
-  try {
-    return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
-  } catch {
-    return fallback;
-  }
-}
-
-function getStoredVoucher(storageKey, expectedDiscountType) {
-  const voucher = readJsonStorage(storageKey, null);
-  if (voucher) {
-    return voucher;
-  }
-
-  const legacyVoucher = readJsonStorage(LEGACY_VOUCHER_STORAGE_KEY, null);
-  return legacyVoucher?.discountType === expectedDiscountType
-    ? legacyVoucher
-    : null;
-}
-
-function readCheckoutData() {
-  if (typeof window === "undefined") {
-    return EMPTY_CHECKOUT_DATA;
-  }
-
-  return {
-    cartItems: readJsonStorage(CART_STORAGE_KEY, []),
-    selectedProductVoucher: getStoredVoucher(
-      PRODUCT_VOUCHER_STORAGE_KEY,
-      "percentage",
-    ),
-    selectedShippingVoucher: getStoredVoucher(
-      SHIPPING_VOUCHER_STORAGE_KEY,
-      "free-shipping",
-    ),
-  };
-}
 
 function calculateProductDiscount(cartItems, voucher) {
   if (!voucher) {
@@ -142,40 +87,29 @@ function calculateSummary(
 
 export default function CheckoutPage() {
   const [isOrderPlaced, setIsOrderPlaced] = useState(false);
-  const [checkoutData, setCheckoutData] = useState(EMPTY_CHECKOUT_DATA);
-  const { cartItems, selectedProductVoucher, selectedShippingVoucher } =
-    checkoutData;
-  const summary = calculateSummary(
+  const {
     cartItems,
     selectedProductVoucher,
     selectedShippingVoucher,
+    clearCheckout,
+  } = useCart();
+  const summary = useMemo(
+    () =>
+      calculateSummary(
+        cartItems,
+        selectedProductVoucher,
+        selectedShippingVoucher,
+      ),
+    [
+      cartItems,
+      selectedProductVoucher,
+      selectedShippingVoucher,
+    ],
   );
-
-  useEffect(() => {
-    function updateCheckoutData() {
-      setCheckoutData(readCheckoutData());
-    }
-
-    updateCheckoutData();
-
-    window.addEventListener(CART_UPDATED_EVENT, updateCheckoutData);
-    window.addEventListener(VOUCHER_UPDATED_EVENT, updateCheckoutData);
-    window.addEventListener("storage", updateCheckoutData);
-
-    return () => {
-      window.removeEventListener(CART_UPDATED_EVENT, updateCheckoutData);
-      window.removeEventListener(VOUCHER_UPDATED_EVENT, updateCheckoutData);
-      window.removeEventListener("storage", updateCheckoutData);
-    };
-  }, []);
 
   const completeCheckout = (event) => {
     event.preventDefault();
-    localStorage.removeItem(PRODUCT_VOUCHER_STORAGE_KEY);
-    localStorage.removeItem(SHIPPING_VOUCHER_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
-    writeCartItems([]);
-    window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
+    clearCheckout();
     setIsOrderPlaced(true);
   };
 

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo } from "react";
 import {
   ArrowLeft,
   BadgePercent,
@@ -40,84 +40,11 @@ import {
 "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { useCart } from "@/context/CartContext";
 import { formatCurrency } from "@/lib/utils";
-import {
-  CART_STORAGE_KEY,
-  CART_UPDATED_EVENT,
-  LEGACY_VOUCHER_STORAGE_KEY,
-  PRODUCT_VOUCHER_STORAGE_KEY,
-  SHIPPING_VOUCHER_STORAGE_KEY,
-  VOUCHER_UPDATED_EVENT,
-  isVoucherCategoryEligible } from
-"@/lib/cart";
+import { isVoucherCategoryEligible } from "@/lib/cart";
 
 const FREE_SHIPPING_THRESHOLD = 750;
-const EMPTY_CART_SNAPSHOT = JSON.stringify({
-  cartItems: [],
-  selectedProductVoucher: null,
-  selectedShippingVoucher: null
-});
-
-function getStoredCartItems() {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  return JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
-}
-
-function getStoredVoucher(storageKey, expectedDiscountType) {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const voucher = JSON.parse(localStorage.getItem(storageKey) || "null");
-  if (voucher) {
-    return voucher;
-  }
-
-  const legacyVoucher = JSON.parse(
-    localStorage.getItem(LEGACY_VOUCHER_STORAGE_KEY) || "null"
-  );
-
-  return legacyVoucher?.discountType === expectedDiscountType ?
-  legacyVoucher :
-  null;
-}
-
-function getCartSnapshot() {
-  if (typeof window === "undefined") {
-    return EMPTY_CART_SNAPSHOT;
-  }
-
-  return JSON.stringify({
-    cartItems: getStoredCartItems(),
-    selectedProductVoucher: getStoredVoucher(
-      PRODUCT_VOUCHER_STORAGE_KEY,
-      "percentage"
-    ),
-    selectedShippingVoucher: getStoredVoucher(
-      SHIPPING_VOUCHER_STORAGE_KEY,
-      "free-shipping"
-    )
-  });
-}
-
-function subscribeToCartStorage(onStoreChange) {
-  if (typeof window === "undefined") {
-    return () => {};
-  }
-
-  window.addEventListener(CART_UPDATED_EVENT, onStoreChange);
-  window.addEventListener(VOUCHER_UPDATED_EVENT, onStoreChange);
-  window.addEventListener("storage", onStoreChange);
-
-  return () => {
-    window.removeEventListener(CART_UPDATED_EVENT, onStoreChange);
-    window.removeEventListener(VOUCHER_UPDATED_EVENT, onStoreChange);
-    window.removeEventListener("storage", onStoreChange);
-  };
-}
 
 function calculateProductVoucherDiscount(cartItems, voucher) {
   if (!voucher) {
@@ -184,13 +111,16 @@ function calculateShippingVoucherDiscount(subtotal, voucher, shipping) {
 }
 
 export default function CartPage() {
-  const storedCartSnapshot = useSyncExternalStore(
-    subscribeToCartStorage,
-    getCartSnapshot,
-    () => EMPTY_CART_SNAPSHOT
-  );
-  const { cartItems, selectedProductVoucher, selectedShippingVoucher } =
-  useMemo(() => JSON.parse(storedCartSnapshot), [storedCartSnapshot]);
+  const {
+    cartItems,
+    selectedProductVoucher,
+    selectedShippingVoucher,
+    updateQuantity,
+    removeItem,
+    clearCart,
+    removeProductVoucher,
+    removeShippingVoucher,
+  } = useCart();
 
   const cartSummary = useMemo(() => {
     const subtotal = cartItems.reduce(
@@ -234,44 +164,6 @@ export default function CartPage() {
       shippingVoucherResult
     };
   }, [cartItems, selectedProductVoucher, selectedShippingVoucher]);
-
-  const syncCart = (updatedCart) => {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
-    window.dispatchEvent(new Event(CART_UPDATED_EVENT));
-  };
-
-  const updateQuantity = (productId, quantity) => {
-    if (quantity < 1) {
-      return;
-    }
-
-    const updatedCart = cartItems.map((item) =>
-    item.id === productId ? { ...item, quantity } : item
-    );
-
-    syncCart(updatedCart);
-  };
-
-  const removeItem = (productId) => {
-    const updatedCart = cartItems.filter((item) => item.id !== productId);
-    syncCart(updatedCart);
-  };
-
-  const clearCart = () => {
-    syncCart([]);
-  };
-
-  const removeProductVoucher = () => {
-    localStorage.removeItem(PRODUCT_VOUCHER_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
-    window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
-  };
-
-  const removeShippingVoucher = () => {
-    localStorage.removeItem(SHIPPING_VOUCHER_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_VOUCHER_STORAGE_KEY);
-    window.dispatchEvent(new Event(VOUCHER_UPDATED_EVENT));
-  };
 
   const amountToFreeShipping = Math.max(
     FREE_SHIPPING_THRESHOLD - cartSummary.subtotal,
