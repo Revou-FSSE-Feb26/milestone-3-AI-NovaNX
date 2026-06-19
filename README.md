@@ -51,8 +51,11 @@ extend.
   and order confirmation flow.
 - **Promotions Page** — voucher catalog with category tabs, claim flow that
   writes the voucher to `localStorage` and redirects to the cart.
-- **FAQ Page** — searchable, category‑tabbed accordion of frequent questions.
-- **About Page** — project overview, tech stack, and portfolio highlights.
+- **FAQ Page** — static-prerendered FAQ with a searchable, category-tabbed
+  client interface. A footer timestamp records when the static page was
+  generated during the production build.
+- **About Page** — project overview, tech stack, and portfolio highlights,
+  implemented as a static Server Component.
 - **Sticky Navbar** — site search, navigation links, live cart badge
   connected to the global Cart Context, authentication-aware navigation, and a
   mobile sheet menu.
@@ -102,7 +105,8 @@ revoshop/
     │   ├── api/products/[id]/route.js # product GET + PUT + DELETE
     │   ├── cart/page.jsx
     │   ├── checkout/page.jsx        # protected checkout page
-    │   ├── faq/page.jsx
+    │   ├── faq/page.jsx              # static FAQ server wrapper + timestamp
+    │   ├── faq/FaqContent.jsx        # interactive FAQ client component
     │   ├── login/page.jsx           # Platzi authentication form
     │   ├── products/[id]/page.jsx   # dynamic product detail
     │   └── promotion/page.jsx
@@ -143,6 +147,42 @@ revoshop/
 - When there is no session cookie, protected pages redirect the visitor to
   `/login`. After a successful login, the user is redirected back to Home.
 
+## Rendering Strategy
+
+The production build output uses `○` for static prerendered routes and `ƒ` for
+routes evaluated on demand:
+
+| Route | Rendering model |
+| ----- | --------------- |
+| `/about` | SSG / static Server Component |
+| `/faq` | SSG + client hydration |
+| `/promotion` | SSG + client hydration |
+| `/cart` | SSG shell + client hydration + `localStorage` |
+| `/` | SSG shell + client hydration + client-side product fetch |
+| `/admin` | SSG shell + client hydration + protected client-side fetch |
+| `/checkout` | SSG shell + client hydration, protected by proxy |
+| `/login` | SSG shell + client hydration |
+| `/products/[id]` | Dynamic route shell + client-side product fetch |
+| `/api/*` | Dynamic Route Handlers that return JSON, not HTML pages |
+
+`"use client"` does not automatically mean pure CSR. Next.js can still
+prerender the initial HTML during the build and then hydrate the page in the
+browser to enable state, events, Context, Tabs, Sheets, and other interactions.
+
+The FAQ demonstrates this split explicitly:
+
+- `faq/page.jsx` is a static Server Component that creates `generatedAt` during
+  the production build.
+- `faq/FaqContent.jsx` is a Client Component that handles search, tabs,
+  accordion interactions, and displays the build timestamp in the footer.
+- Closing or reopening the browser does not change the timestamp; it changes
+  only after a new production build or deployment.
+
+The current project does not use ISR or a full SSR page. Product Detail remains
+client-fetched because the selected Platzi/Mock source is stored in browser
+`localStorage`. If it is later converted to ISR, Platzi should become the
+server-side primary source and file-based Mock data should be the fallback.
+
 ## Data Fetching & Loading Experience
 
 - The Home page loads products client-side in `useEffect()` through
@@ -166,6 +206,22 @@ revoshop/
   Cart, and Admin to reduce layout shifts and provide clearer visual feedback.
 - Home also uses the same skeleton as its `<Suspense>` fallback while
   `useSearchParams()` is being resolved.
+
+### Team Leader Feedback Improvements
+
+- **Request cancellation** — fetch operations started by React effects receive
+  an `AbortSignal`. Their cleanup functions call `controller.abort()` when the
+  component unmounts or the dependency changes, preventing obsolete responses
+  from updating state.
+- **Universal retry** — `src/lib/fetch-with-retry.js` performs one initial
+  Platzi READ request plus a maximum of two retries, waiting 500 ms and then
+  1 second between attempts.
+- **Mock fallback** — after every Platzi READ attempt fails, product lists,
+  product details, and categories use their corresponding Mock data. The UI
+  shows an error only when both Platzi and Mock data are unavailable.
+- **Safe retry scope** — automatic retry is intentionally limited to READ
+  requests. Create, update, delete, login, and checkout actions are not retried
+  automatically to avoid duplicate mutations or submissions.
 
 ## Login Accounts
 
