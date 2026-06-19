@@ -45,25 +45,35 @@ export default function ProductDetailPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function fetchProduct() {
       try {
         setLoading(true);
         setError("");
 
-        const data = await getProductById(id);
+        const data = await getProductById(id, {
+          signal: controller.signal,
+        });
         setProduct(data);
       } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+
         setError(
           error instanceof Error ? error.message : "Failed to load product.",
         );
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
     if (id) {
       fetchProduct();
     }
+
+    return () => controller.abort();
   }, [id]);
 
   if (loading) {

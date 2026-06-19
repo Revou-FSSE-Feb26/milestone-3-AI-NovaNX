@@ -38,10 +38,11 @@ export async function loginWithCredentials(email, password) {
 /**
  * Mengambil user aktif dari HttpOnly session cookie melalui Route Handler.
  */
-export async function getCurrentUser() {
+export async function getCurrentUser({ signal } = {}) {
   const response = await fetch("/api/auth/me", {
     method: "GET",
     cache: "no-store",
+    signal,
   });
 
   if (response.status === 401) {

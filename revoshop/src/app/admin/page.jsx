@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -103,15 +104,6 @@ function buildPayload(form) {
   };
 }
 
-function validate(form) {
-  if (!form.title.trim()) return "Product title is required.";
-  if (!form.price || Number(form.price) <= 0)
-    return "Price must be a positive number.";
-  if (!form.description.trim()) return "Description is required.";
-  if (!form.categoryId) return "Please select a category.";
-  return "";
-}
-
 function FieldLabel({ htmlFor, children }) {
   return (
     <label htmlFor={htmlFor} className="text-sm font-medium">
@@ -120,56 +112,73 @@ function FieldLabel({ htmlFor, children }) {
   );
 }
 
-function ProductForm({ form, setForm, categories, error, submitting }) {
-  // Memperbarui satu field di dalam objek form saat pengguna mengetik
-  function handleChange(field, value) {
-    setForm(function (prev) {
-      return { ...prev, [field]: value };
-    });
-  }
+function FieldError({ message }) {
+  if (!message) return null;
+  return <p className="text-xs text-destructive">{message}</p>;
+}
 
+function ProductForm({
+  formId,
+  register,
+  errors,
+  categories,
+  submitting,
+  onSubmit,
+}) {
   return (
-    <div className="space-y-4">
-      {error && (
+    <form id={formId} onSubmit={onSubmit} className="space-y-4">
+      {errors.root?.server && (
         <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           <AlertTriangle aria-hidden="true" className="mt-0.5 size-4" />
-          <span>{error}</span>
+          <span>{errors.root.server.message}</span>
         </div>
       )}
 
-      {}
       <div className="space-y-1.5">
-        <FieldLabel htmlFor="title">Title</FieldLabel>
+        <FieldLabel htmlFor={`${formId}-title`}>Title</FieldLabel>
         <Input
-          id="title"
-          value={form.title}
-          onChange={(e) => handleChange("title", e.target.value)}
+          id={`${formId}-title`}
+          {...register("title", {
+            required: "Product title is required.",
+            validate: (value) =>
+              value.trim().length > 0 || "Product title is required.",
+          })}
           placeholder="e.g. Classic Sneakers"
           disabled={submitting}
         />
+        <FieldError message={errors.title?.message} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <FieldLabel htmlFor="price">Price (USD)</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-price`}>Price (USD)</FieldLabel>
           <Input
-            id="price"
+            id={`${formId}-price`}
             type="number"
             min="0"
             step="0.01"
-            value={form.price}
-            onChange={(e) => handleChange("price", e.target.value)}
+            {...register("price", {
+              required: "Price is required.",
+              valueAsNumber: true,
+              min: {
+                value: 0.01,
+                message: "Price must be a positive number.",
+              },
+            })}
             placeholder="29.99"
             disabled={submitting}
           />
+          <FieldError message={errors.price?.message} />
         </div>
 
         <div className="space-y-1.5">
-          <FieldLabel htmlFor="categoryId">Category</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-categoryId`}>Category</FieldLabel>
           <select
-            id="categoryId"
-            value={form.categoryId}
-            onChange={(e) => handleChange("categoryId", e.target.value)}
+            id={`${formId}-categoryId`}
+            {...register("categoryId", {
+              required: "Please select a category.",
+              valueAsNumber: true,
+            })}
             disabled={submitting}
             className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
           >
@@ -180,28 +189,32 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
               </option>
             ))}
           </select>
+          <FieldError message={errors.categoryId?.message} />
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <FieldLabel htmlFor="description">Description</FieldLabel>
+        <FieldLabel htmlFor={`${formId}-description`}>Description</FieldLabel>
         <textarea
-          id="description"
-          value={form.description}
-          onChange={(e) => handleChange("description", e.target.value)}
+          id={`${formId}-description`}
+          {...register("description", {
+            required: "Description is required.",
+            validate: (value) =>
+              value.trim().length > 0 || "Description is required.",
+          })}
           placeholder="Short product description"
           rows={4}
           disabled={submitting}
           className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
         />
+        <FieldError message={errors.description?.message} />
       </div>
 
       <div className="space-y-1.5">
-        <FieldLabel htmlFor="images">Image URLs</FieldLabel>
+        <FieldLabel htmlFor={`${formId}-images`}>Image URLs</FieldLabel>
         <textarea
-          id="images"
-          value={form.images}
-          onChange={(e) => handleChange("images", e.target.value)}
+          id={`${formId}-images`}
+          {...register("images")}
           placeholder="One URL per line (or comma separated)"
           rows={3}
           disabled={submitting}
@@ -212,7 +225,7 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
           Leave empty to use a placeholder image.
         </p>
       </div>
-    </div>
+    </form>
   );
 }
 
@@ -300,34 +313,57 @@ export default function AdminPage() {
 
   // ---- State: Form Tambah Produk ----
   const [createOpen, setCreateOpen] = useState(false); // sheet terbuka/tutup
-  const [createForm, setCreateForm] = useState(EMPTY_FORM); // isi form
-  const [createError, setCreateError] = useState(""); // pesan error form
-  const [creating, setCreating] = useState(false); // sedang menyimpan?
+  const {
+    register: registerCreate,
+    handleSubmit: submitCreateForm,
+    reset: resetCreateForm,
+    setError: setCreateError,
+    formState: {
+      errors: createErrors,
+      isSubmitting: creating,
+    },
+  } = useForm({ defaultValues: EMPTY_FORM });
 
   // ---- State: Form Edit Produk ----
   const [editingProduct, setEditingProduct] = useState(null);
-  const [editForm, setEditForm] = useState(EMPTY_FORM);
-  const [editError, setEditError] = useState("");
-  const [updating, setUpdating] = useState(false);
+  const {
+    register: registerEdit,
+    handleSubmit: submitEditForm,
+    reset: resetEditForm,
+    setError: setEditError,
+    formState: {
+      errors: editErrors,
+      isSubmitting: updating,
+    },
+  } = useForm({ defaultValues: EMPTY_FORM });
 
   const [deletingId, setDeletingId] = useState(null);
+  const reloadControllerRef = useRef(null);
 
   async function loadData() {
     if (authSession?.role !== ADMIN_ROLE) return;
+
+    reloadControllerRef.current?.abort();
+    const controller = new AbortController();
+    reloadControllerRef.current = controller;
 
     try {
       setLoading(true);
       setError("");
       const [productsData, categoriesData] = await Promise.all([
-        getProducts(),
-        getCategories(),
+        getProducts({ signal: controller.signal }),
+        getCategories({ signal: controller.signal }),
       ]);
       setProducts(productsData);
       setCategories(categoriesData);
     } catch (err) {
+      if (err.name === "AbortError") return;
+
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
   }
 
@@ -349,14 +385,25 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function checkAccess() {
-      const user = await getCurrentUser().catch(() => null);
-      if (user) {
-        writeAuthSession(user);
+      try {
+        const user = await getCurrentUser({ signal: controller.signal });
+        if (user) {
+          writeAuthSession(user);
+        }
+        setAuthSession(user);
+        setDataSource(getProductDataSource());
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setAuthSession(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setAuthChecked(true);
+        }
       }
-      setAuthSession(user);
-      setDataSource(getProductDataSource());
-      setAuthChecked(true);
     }
 
     checkAccess();
@@ -365,30 +412,42 @@ export default function AdminPage() {
       setAuthSession(readAuthSession());
     });
 
-    return unsubscribe;
+    return () => {
+      controller.abort();
+      reloadControllerRef.current?.abort();
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
     if (authSession?.role !== ADMIN_ROLE) return;
+
+    const controller = new AbortController();
 
     async function fetchProducts() {
       try {
         setLoading(true);
         setError("");
         const [productsData, categoriesData] = await Promise.all([
-          getProducts(),
-          getCategories(),
+          getProducts({ signal: controller.signal }),
+          getCategories({ signal: controller.signal }),
         ]);
         setProducts(productsData);
         setCategories(categoriesData);
       } catch (err) {
+        if (err.name === "AbortError") return;
+
         setError(err.message);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
     fetchProducts();
+
+    return () => controller.abort();
   }, [authSession?.role, dataSource]);
 
   useEffect(() => {
@@ -397,55 +456,43 @@ export default function AdminPage() {
     return () => clearTimeout(timeoutId);
   }, [feedback]);
 
-  const searchQuery = search.toLowerCase().trim();
+  const filteredProducts = useMemo(() => {
+    const searchQuery = search.toLowerCase().trim();
 
-  // Filter produk berdasarkan kata kunci pencarian
-  let filteredProducts;
-  if (!searchQuery) {
-    // Jika tidak ada kata kunci, tampilkan semua produk
-    filteredProducts = products;
-  } else {
-    filteredProducts = products.filter(function (product) {
-      // Gabungkan title, kategori, dan deskripsi menjadi satu teks
-      const title = product.title || "";
-      const categoryName = (product.category && product.category.name) || "";
-      const description = product.description || "";
-      const fullText = (
-        title +
-        " " +
-        categoryName +
-        " " +
-        description
-      ).toLowerCase();
-      return fullText.includes(searchQuery);
-    });
-  }
-
-  const handleCreate = async () => {
-    const validationError = validate(createForm);
-    if (validationError) {
-      setCreateError(validationError);
-      return;
+    if (!searchQuery) {
+      return products;
     }
 
+    return products.filter((product) => {
+      const searchableText = [
+        product.title,
+        product.category?.name,
+        product.description,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(searchQuery);
+    });
+  }, [products, search]);
+
+  const handleCreate = async (formData) => {
     try {
-      setCreating(true);
-      setCreateError("");
-      const created = await createProduct(buildPayload(createForm));
+      const created = await createProduct(buildPayload(formData));
       setProducts((prev) => [created, ...prev]);
       setFeedback({ type: "success", message: `"${created.title}" created.` });
-      setCreateForm(EMPTY_FORM);
+      resetCreateForm(EMPTY_FORM);
       setCreateOpen(false);
     } catch (err) {
-      setCreateError(err.message);
-    } finally {
-      setCreating(false);
+      setCreateError("root.server", {
+        message: err.message,
+      });
     }
   };
 
   const openEdit = (product) => {
     setEditingProduct(product);
-    setEditError("");
 
     // Bersihkan setiap URL gambar dan gabungkan dengan baris baru
     const imageList = product.images || [];
@@ -454,7 +501,7 @@ export default function AdminPage() {
       cleanedImages.push(cleanImageUrl(imageList[i]));
     }
 
-    setEditForm({
+    resetEditForm({
       title: product.title || "",
       price: product.price ? product.price.toString() : "",
       description: product.description || "",
@@ -466,21 +513,13 @@ export default function AdminPage() {
     });
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (formData) => {
     if (!editingProduct) return;
 
-    const validationError = validate(editForm);
-    if (validationError) {
-      setEditError(validationError);
-      return;
-    }
-
     try {
-      setUpdating(true);
-      setEditError("");
       const updated = await updateProduct(
         editingProduct.id,
-        buildPayload(editForm),
+        buildPayload(formData),
       );
       setProducts((prev) =>
         prev.map((product) =>
@@ -490,9 +529,9 @@ export default function AdminPage() {
       setFeedback({ type: "success", message: `"${updated.title}" updated.` });
       setEditingProduct(null);
     } catch (err) {
-      setEditError(err.message);
-    } finally {
-      setUpdating(false);
+      setEditError("root.server", {
+        message: err.message,
+      });
     }
   };
 
@@ -564,7 +603,7 @@ export default function AdminPage() {
               </CardDescription>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-end gap-2">
               <div className="flex flex-col gap-1">
                 <label
                   htmlFor="product-data-source"
@@ -599,55 +638,8 @@ export default function AdminPage() {
                 ) : (
                   <RefreshCw aria-hidden="true" className="size-4" />
                 )}
-                Refresh
+                Reload Data
               </Button>
-
-              <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-                <SheetTrigger asChild>
-                  <Button className="gap-2">
-                    <PlusCircle aria-hidden="true" className="size-4" />
-                    Add Product
-                  </Button>
-                </SheetTrigger>
-                <SheetContent className="w-full sm:max-w-lg">
-                  <SheetHeader>
-                    <SheetTitle className="flex items-center gap-2">
-                      <PackagePlus aria-hidden="true" className="size-5" />
-                      Add Product
-                    </SheetTitle>
-                    <SheetDescription>
-                      Fill in the product details. Fields marked are required.
-                    </SheetDescription>
-                  </SheetHeader>
-
-                  <div className="overflow-y-auto px-4">
-                    <ProductForm
-                      form={createForm}
-                      setForm={setCreateForm}
-                      categories={categories}
-                      error={createError}
-                      submitting={creating}
-                    />
-                  </div>
-
-                  <SheetFooter>
-                    <Button onClick={handleCreate} disabled={creating}>
-                      {creating && (
-                        <Loader2
-                          aria-hidden="true"
-                          className="size-4 animate-spin"
-                        />
-                      )}
-                      Create Product
-                    </Button>
-                    <SheetClose asChild>
-                      <Button variant="outline" disabled={creating}>
-                        Cancel
-                      </Button>
-                    </SheetClose>
-                  </SheetFooter>
-                </SheetContent>
-              </Sheet>
             </div>
           </CardHeader>
 
@@ -684,9 +676,69 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Layers aria-hidden="true" className="size-4" />
-                {filteredProducts.length} of {products.length} products
+              <div className="flex flex-wrap items-center gap-3">
+                <Sheet
+                  open={createOpen}
+                  onOpenChange={(open) => {
+                    setCreateOpen(open);
+                    if (!open) resetCreateForm(EMPTY_FORM);
+                  }}
+                >
+                  <SheetTrigger asChild>
+                    <Button className="gap-2">
+                      <PlusCircle aria-hidden="true" className="size-4" />
+                      Add Product
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="w-full sm:max-w-lg">
+                    <SheetHeader>
+                      <SheetTitle className="flex items-center gap-2">
+                        <PackagePlus aria-hidden="true" className="size-5" />
+                        Add Product
+                      </SheetTitle>
+                      <SheetDescription>
+                        Fill in the product details. Fields marked are required.
+                      </SheetDescription>
+                    </SheetHeader>
+
+                    <div className="overflow-y-auto px-4">
+                      <ProductForm
+                        formId="create-product-form"
+                        register={registerCreate}
+                        errors={createErrors}
+                        categories={categories}
+                        submitting={creating}
+                        onSubmit={submitCreateForm(handleCreate)}
+                      />
+                    </div>
+
+                    <SheetFooter>
+                      <Button
+                        type="submit"
+                        form="create-product-form"
+                        disabled={creating}
+                      >
+                        {creating && (
+                          <Loader2
+                            aria-hidden="true"
+                            className="size-4 animate-spin"
+                          />
+                        )}
+                        Create Product
+                      </Button>
+                      <SheetClose asChild>
+                        <Button variant="outline" disabled={creating}>
+                          Cancel
+                        </Button>
+                      </SheetClose>
+                    </SheetFooter>
+                  </SheetContent>
+                </Sheet>
+
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Layers aria-hidden="true" className="size-4" />
+                  {filteredProducts.length} of {products.length} products
+                </div>
               </div>
             </div>
 
@@ -812,7 +864,10 @@ export default function AdminPage() {
       <Sheet
         open={Boolean(editingProduct)}
         onOpenChange={(open) => {
-          if (!open) setEditingProduct(null);
+          if (!open) {
+            setEditingProduct(null);
+            resetEditForm(EMPTY_FORM);
+          }
         }}
       >
         <SheetContent className="w-full sm:max-w-lg">
@@ -828,16 +883,21 @@ export default function AdminPage() {
 
           <div className="overflow-y-auto px-4">
             <ProductForm
-              form={editForm}
-              setForm={setEditForm}
+              formId="edit-product-form"
+              register={registerEdit}
+              errors={editErrors}
               categories={categories}
-              error={editError}
               submitting={updating}
+              onSubmit={submitEditForm(handleUpdate)}
             />
           </div>
 
           <SheetFooter>
-            <Button onClick={handleUpdate} disabled={updating}>
+            <Button
+              type="submit"
+              form="edit-product-form"
+              disabled={updating}
+            >
               {updating && (
                 <Loader2 aria-hidden="true" className="size-4 animate-spin" />
               )}
@@ -846,7 +906,10 @@ export default function AdminPage() {
             <Button
               variant="outline"
               disabled={updating}
-              onClick={() => setEditingProduct(null)}
+              onClick={() => {
+                setEditingProduct(null);
+                resetEditForm(EMPTY_FORM);
+              }}
             >
               Cancel
             </Button>

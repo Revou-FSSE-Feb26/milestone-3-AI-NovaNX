@@ -62,7 +62,7 @@ function HomeSkeleton() {
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           <aside>
             <Card className="bg-background shadow-sm">
-              <CardHeader>
+              <CardHeader className="">
                 <div className="h-6 w-20 rounded-full bg-muted" />
                 <div className="h-6 w-32 rounded bg-muted" />
                 <div className="h-4 w-full rounded bg-muted" />
@@ -88,11 +88,11 @@ function HomeSkeleton() {
               {Array.from({ length: 6 }, (_, index) => (
                 <Card key={index} className="overflow-hidden">
                   <div className="h-56 w-full bg-muted" />
-                  <CardHeader>
+                  <CardHeader className="">
                     <div className="h-5 w-24 rounded-full bg-muted" />
                     <div className="h-6 w-3/4 rounded bg-muted" />
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="">
                     <div className="h-7 w-24 rounded bg-muted" />
                   </CardContent>
                   <div className="px-6 pb-6">
@@ -155,19 +155,27 @@ function HomeContent() {
   }, [products, searchQuery, selectedCategory]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function initializePage() {
       try {
 
-        const data = await getProducts();
+        const data = await getProducts({ signal: controller.signal });
         setProducts(isProductArray(data) ? data : []);
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+
         setError(err instanceof Error ? err.message : "Failed to load products");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
     initializePage();
+
+    return () => controller.abort();
   }, []);
 
   if (loading) {

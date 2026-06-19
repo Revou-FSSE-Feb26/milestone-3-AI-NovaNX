@@ -34,15 +34,25 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function redirectAuthenticatedUser() {
-      const user = await getCurrentUser().catch(() => null);
-      if (user) {
-        writeAuthSession(user);
-        router.replace("/");
+      try {
+        const user = await getCurrentUser({ signal: controller.signal });
+        if (user) {
+          writeAuthSession(user);
+          router.replace("/");
+        }
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setErrorMessage(error.message);
+        }
       }
     }
 
     redirectAuthenticatedUser();
+
+    return () => controller.abort();
   }, [router]);
 
   function handleInputChange(event) {

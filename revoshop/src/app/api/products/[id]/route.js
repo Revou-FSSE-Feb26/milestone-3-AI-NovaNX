@@ -1,38 +1,23 @@
 import { NextResponse } from "next/server";
 import { mockProducts } from "@/data/mockProducts";
-import {
-  AUTH_SESSION_COOKIE,
-  isAdminSession,
-  parseSessionCookie,
-} from "@/lib/session";
+import { fetchWithRetry } from "@/lib/fetch-with-retry";
+import { validateProductPayload } from "@/lib/product-validation";
+import { isVerifiedAdminRequest } from "@/lib/session";
 
 const BASE_URL = "https://api.escuelajs.co/api/v1";
-
-// Fungsi pembantu: cek apakah request berasal dari admin yang sudah login.
-// Middleware sudah melindungi halaman /admin di browser, tapi API route
-// perlu dicek sendiri karena endpoint bisa dipanggil langsung tanpa browser.
-function isAdminRequest(request) {
-  const session = parseSessionCookie(
-    request.cookies.get(AUTH_SESSION_COOKIE)?.value,
-  );
-  return isAdminSession(session);
-}
 
 // Fungsi untuk ambil detail produk berdasarkan ID
 export async function GET(request, { params }) {
   const { id } = await params;
 
   try {
-    const res = await fetch(`${BASE_URL}/products/${id}`, {
+    const res = await fetchWithRetry(`${BASE_URL}/products/${id}`, {
       cache: "no-store",
     });
-
-    if (res.ok) {
-      const data = await res.json();
-      return NextResponse.json(data);
-    }
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch {
-    // Lanjutkan ke mock data jika API Platzi tidak dapat dijangkau.
+    // Setelah retry gagal, lanjutkan ke mock data.
   }
 
   const fallbackProduct = mockProducts.find(
@@ -51,42 +36,79 @@ export async function GET(request, { params }) {
 
 // Fungsi untuk update produk
 export async function PUT(request, { params }) {
-  // Hanya admin yang boleh mengubah produk
-  if (!isAdminRequest(request)) {
+  if (!(await isVerifiedAdminRequest(request))) {
     return NextResponse.json(
       { message: "Forbidden: admin access required." },
       { status: 403 },
     );
   }
 
-  const { id } = await params;
-  const body = await request.json();
+  try {
+    const { id } = await params;
+    const body = await request.json().catch(() => null);
+    const validation = validateProductPayload(body);
 
-  const res = await fetch(`${BASE_URL}/products/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+    if (validation.error) {
+      return NextResponse.json(
+        { message: validation.error },
+        { status: 400 },
+      );
+    }
 
-  const data = await res.json();
-  return NextResponse.json(data);
+    const res = await fetch(`${BASE_URL}/products/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(validation.data),
+    });
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { message: data?.message || "Failed to update product." },
+        { status: res.status },
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Product PUT error:", error);
+    return NextResponse.json(
+      { message: "Unable to update product." },
+      { status: 500 },
+    );
+  }
 }
 
 // Fungsi untuk hapus produk
 export async function DELETE(request, { params }) {
-  // Hanya admin yang boleh menghapus produk
-  if (!isAdminRequest(request)) {
+  if (!(await isVerifiedAdminRequest(request))) {
     return NextResponse.json(
       { message: "Forbidden: admin access required." },
       { status: 403 },
     );
   }
 
-  const { id } = await params;
+  try {
+    const { id } = await params;
 
-  await fetch(`${BASE_URL}/products/${id}`, {
-    method: "DELETE",
-  });
+    const res = await fetch(`${BASE_URL}/products/${id}`, {
+      method: "DELETE",
+    });
 
-  return NextResponse.json({ message: "Product deleted" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return NextResponse.json(
+        { message: data?.message || "Failed to delete product." },
+        { status: res.status },
+      );
+    }
+
+    return NextResponse.json({ message: "Product deleted." });
+  } catch (error) {
+    console.error("Product DELETE error:", error);
+    return NextResponse.json(
+      { message: "Unable to delete product." },
+      { status: 500 },
+    );
+  }
 }

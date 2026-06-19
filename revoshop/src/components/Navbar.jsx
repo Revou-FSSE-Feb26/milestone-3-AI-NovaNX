@@ -66,20 +66,26 @@ export default function Navbar() {
   const isNonAdminRole = authSession && authSession.role !== ADMIN_ROLE;
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function syncSession() {
       try {
-        const user = await getCurrentUser();
+        const user = await getCurrentUser({ signal: controller.signal });
         if (user) {
           writeAuthSession(user);
         } else {
           removeStoredAuthSession();
         }
-      } catch {
-        removeStoredAuthSession();
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          removeStoredAuthSession();
+        }
       }
     }
 
     syncSession();
+
+    return () => controller.abort();
   }, []);
 
   const isActive = (href) => {

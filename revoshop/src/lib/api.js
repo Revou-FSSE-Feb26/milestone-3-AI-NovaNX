@@ -1,5 +1,6 @@
 import { mockCategories } from "@/data/mockCategories";
 import { mockProducts } from "@/data/mockProducts";
+import { fetchWithRetry } from "@/lib/fetch-with-retry";
 
 // ============================================================
 // KONFIGURASI DASAR
@@ -141,22 +142,27 @@ function makeProductFromForm(formData, existingId) {
  * - Mode MOCK  : kembalikan data dari mockCategories.js
  * - Mode PLATZI: ambil dari API Platzi Fake Store
  */
-export async function getCategories() {
+export async function getCategories({ signal } = {}) {
   const source = getProductDataSource();
 
   if (source === PRODUCT_DATA_SOURCES.MOCK) {
     return mockCategories;
   }
 
-  // Kirim request ke API Platzi
-  const response = await fetch(PLATZI_CATEGORIES_URL);
-
-  if (!response.ok) {
-    throw new Error("Gagal mengambil data kategori dari server.");
+  try {
+    const response = await fetchWithRetry(PLATZI_CATEGORIES_URL, { signal });
+    return await response.json();
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw error;
+    }
   }
 
-  const data = await response.json();
-  return data;
+  if (mockCategories.length > 0) {
+    return mockCategories;
+  }
+
+  throw new Error("Gagal mengambil kategori dari Platzi maupun mock data.");
 }
 
 // ============================================================
@@ -168,7 +174,7 @@ export async function getCategories() {
  * - Mode MOCK  : dari mockStore (data lokal di memory)
  * - Mode PLATZI: dari API internal Next.js (/api/products)
  */
-export async function getProducts() {
+export async function getProducts({ signal } = {}) {
   const source = getProductDataSource();
 
   if (source === PRODUCT_DATA_SOURCES.MOCK) {
@@ -178,20 +184,29 @@ export async function getProducts() {
     });
   }
 
-  const response = await fetch(API_BASE);
+  try {
+    const response = await fetch(API_BASE, { signal });
 
-  if (!response.ok) {
-    throw new Error("Gagal mengambil daftar produk.");
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw error;
+    }
   }
 
-  const data = await response.json();
-  return data;
+  if (mockStore.length > 0) {
+    return mockStore.map((product) => ({ ...product }));
+  }
+
+  throw new Error("Gagal mengambil produk dari Platzi maupun mock data.");
 }
 
 /**
  * 2. READ — Mengambil satu produk berdasarkan ID.
  */
-export async function getProductById(id) {
+export async function getProductById(id, { signal } = {}) {
   const source = getProductDataSource();
 
   if (source === PRODUCT_DATA_SOURCES.MOCK) {
@@ -211,12 +226,23 @@ export async function getProductById(id) {
       typeof window === "undefined"
         ? `${PLATZI_PRODUCTS_URL}/${id}`
         : `${API_BASE}/${id}`;
-    const response = await fetch(productUrl, { cache: "no-store" });
+    const response =
+      typeof window === "undefined"
+        ? await fetchWithRetry(productUrl, {
+            cache: "no-store",
+            signal,
+          })
+        : await fetch(productUrl, {
+            cache: "no-store",
+            signal,
+          });
 
-    if (response.ok) {
-      return await response.json();
+    return await response.json();
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw error;
     }
-  } catch {
+
     // Jika Platzi sedang bermasalah, lanjutkan ke fallback mock.
   }
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   ArrowLeft,
   BadgePercent,
@@ -29,6 +30,11 @@ import { isVoucherCategoryEligible } from "@/lib/cart";
 import { formatCurrency } from "@/lib/utils";
 
 const FREE_SHIPPING_THRESHOLD = 750;
+
+function FieldError({ message }) {
+  if (!message) return null;
+  return <p className="text-xs text-destructive">{message}</p>;
+}
 
 function calculateProductDiscount(cartItems, voucher) {
   if (!voucher) {
@@ -88,6 +94,11 @@ function calculateSummary(
 export default function CheckoutPage() {
   const [isOrderPlaced, setIsOrderPlaced] = useState(false);
   const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm();
+  const {
     cartItems,
     selectedProductVoucher,
     selectedShippingVoucher,
@@ -107,8 +118,7 @@ export default function CheckoutPage() {
     ],
   );
 
-  const completeCheckout = (event) => {
-    event.preventDefault();
+  const completeCheckout = async () => {
     clearCheckout();
     setIsOrderPlaced(true);
   };
@@ -201,7 +211,11 @@ export default function CheckoutPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-          <form onSubmit={completeCheckout} className="space-y-6">
+          <form
+            onSubmit={handleSubmit(completeCheckout)}
+            className="space-y-6"
+            noValidate
+          >
             <Card className="bg-background shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -217,7 +231,19 @@ export default function CheckoutPage() {
                   <label htmlFor="fullName" className="text-sm font-medium">
                     Full name
                   </label>
-                  <Input id="fullName" placeholder="Nicolas" required />
+                  <Input
+                    id="fullName"
+                    placeholder="Nicolas"
+                    disabled={isSubmitting}
+                    {...register("fullName", {
+                      required: "Full name is required.",
+                      minLength: {
+                        value: 2,
+                        message: "Full name must be at least 2 characters.",
+                      },
+                    })}
+                  />
+                  <FieldError message={errors.fullName?.message} />
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="email" className="text-sm font-medium">
@@ -227,8 +253,16 @@ export default function CheckoutPage() {
                     id="email"
                     type="email"
                     placeholder="nico@gmail.com"
-                    required
+                    disabled={isSubmitting}
+                    {...register("email", {
+                      required: "Email is required.",
+                      pattern: {
+                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                        message: "Enter a valid email address.",
+                      },
+                    })}
                   />
+                  <FieldError message={errors.email?.message} />
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="phone" className="text-sm font-medium">
@@ -238,8 +272,16 @@ export default function CheckoutPage() {
                     id="phone"
                     type="tel"
                     placeholder="+62 812 0000"
-                    required
+                    disabled={isSubmitting}
+                    {...register("phone", {
+                      required: "Phone number is required.",
+                      pattern: {
+                        value: /^[+]?[\d\s-]{8,20}$/,
+                        message: "Enter a valid phone number.",
+                      },
+                    })}
                   />
+                  <FieldError message={errors.phone?.message} />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <label htmlFor="address" className="text-sm font-medium">
@@ -248,8 +290,16 @@ export default function CheckoutPage() {
                   <Input
                     id="address"
                     placeholder="Street, city, postal code"
-                    required
+                    disabled={isSubmitting}
+                    {...register("address", {
+                      required: "Address is required.",
+                      minLength: {
+                        value: 10,
+                        message: "Address must be at least 10 characters.",
+                      },
+                    })}
                   />
+                  <FieldError message={errors.address?.message} />
                 </div>
               </CardContent>
             </Card>
@@ -269,7 +319,15 @@ export default function CheckoutPage() {
                   <label htmlFor="cardName" className="text-sm font-medium">
                     Name on card
                   </label>
-                  <Input id="cardName" placeholder="Nicolas" required />
+                  <Input
+                    id="cardName"
+                    placeholder="Nicolas"
+                    disabled={isSubmitting}
+                    {...register("cardName", {
+                      required: "Name on card is required.",
+                    })}
+                  />
+                  <FieldError message={errors.cardName?.message} />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <label htmlFor="cardNumber" className="text-sm font-medium">
@@ -279,14 +337,37 @@ export default function CheckoutPage() {
                     id="cardNumber"
                     inputMode="numeric"
                     placeholder="4242 4242 4242 4242"
-                    required
+                    disabled={isSubmitting}
+                    {...register("cardNumber", {
+                      required: "Card number is required.",
+                      validate: (value) =>
+                        value.replace(/\s/g, "").length === 16 ||
+                        "Card number must contain 16 digits.",
+                      pattern: {
+                        value: /^[\d\s]+$/,
+                        message: "Card number must contain digits only.",
+                      },
+                    })}
                   />
+                  <FieldError message={errors.cardNumber?.message} />
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="expiry" className="text-sm font-medium">
                     Expiry
                   </label>
-                  <Input id="expiry" placeholder="12/28" required />
+                  <Input
+                    id="expiry"
+                    placeholder="12/28"
+                    disabled={isSubmitting}
+                    {...register("expiry", {
+                      required: "Expiry date is required.",
+                      pattern: {
+                        value: /^(0[1-9]|1[0-2])\/\d{2}$/,
+                        message: "Use MM/YY format.",
+                      },
+                    })}
+                  />
+                  <FieldError message={errors.expiry?.message} />
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="cvc" className="text-sm font-medium">
@@ -296,14 +377,26 @@ export default function CheckoutPage() {
                     id="cvc"
                     inputMode="numeric"
                     placeholder="123"
-                    required
+                    disabled={isSubmitting}
+                    {...register("cvc", {
+                      required: "CVC is required.",
+                      pattern: {
+                        value: /^\d{3,4}$/,
+                        message: "CVC must contain 3 or 4 digits.",
+                      },
+                    })}
                   />
+                  <FieldError message={errors.cvc?.message} />
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full gap-2 sm:w-auto">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full gap-2 sm:w-auto"
+                >
                   <PackageCheck aria-hidden="true" className="size-4" />
-                  Place Order
+                  {isSubmitting ? "Processing..." : "Place Order"}
                 </Button>
               </CardFooter>
             </Card>
