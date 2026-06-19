@@ -216,6 +216,74 @@ function ProductForm({ form, setForm, categories, error, submitting }) {
   );
 }
 
+function AdminProductSkeleton() {
+  return (
+    <div
+      className="grid animate-pulse gap-3 sm:grid-cols-2 xl:grid-cols-3"
+      aria-busy="true"
+      aria-label="Loading products"
+    >
+      {Array.from({ length: 6 }, (_, index) => (
+        <div
+          key={index}
+          className="flex flex-col gap-3 rounded-xl border bg-card p-3 shadow-sm"
+        >
+          <div className="flex items-start gap-3">
+            <div className="size-16 shrink-0 rounded-md bg-muted" />
+            <div className="min-w-0 flex-1">
+              <div className="h-5 w-3/4 rounded bg-muted" />
+              <div className="mt-2 h-3 w-20 rounded bg-muted" />
+              <div className="mt-3 flex gap-2">
+                <div className="h-5 w-24 rounded-full bg-muted" />
+                <div className="h-5 w-16 rounded bg-muted" />
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 border-t pt-3">
+            <div className="h-8 flex-1 rounded-md bg-muted" />
+            <div className="h-8 flex-1 rounded-md bg-muted" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AdminPageSkeleton() {
+  return (
+    <main
+      className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8"
+      aria-busy="true"
+      aria-label="Loading admin dashboard"
+    >
+      <section className="mx-auto max-w-7xl animate-pulse">
+        <Card className="bg-background shadow-sm">
+          <CardHeader className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="space-y-3">
+              <div className="h-6 w-40 rounded-full bg-muted" />
+              <div className="h-9 w-64 rounded bg-muted" />
+              <div className="h-4 w-full max-w-lg rounded bg-muted" />
+            </div>
+            <div className="flex gap-2">
+              <div className="h-9 w-44 rounded-md bg-muted" />
+              <div className="h-9 w-24 rounded-md bg-muted" />
+              <div className="h-9 w-32 rounded-md bg-muted" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between gap-3">
+              <div className="h-9 w-full max-w-sm rounded-md bg-muted" />
+              <div className="h-5 w-32 rounded bg-muted" />
+            </div>
+            <Separator />
+            <AdminProductSkeleton />
+          </CardContent>
+        </Card>
+      </section>
+    </main>
+  );
+}
+
 export default function AdminPage() {
   // ---- State: Autentikasi ----
   const [authSession, setAuthSession] = useState(null); // data sesi login
@@ -442,20 +510,7 @@ export default function AdminPage() {
   };
 
   if (!authChecked) {
-    return (
-      <main className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8">
-        <section className="mx-auto max-w-3xl">
-          <Card className="bg-background text-center shadow-sm">
-            <CardHeader className="items-center p-8">
-              <CardTitle>Checking access...</CardTitle>
-              <CardDescription>
-                Please wait while RevoShop checks your login session.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </section>
-      </main>
-    );
+    return <AdminPageSkeleton />;
   }
 
   // Tentukan apakah pengguna saat ini adalah admin
@@ -640,9 +695,7 @@ export default function AdminPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             {loading ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                Loading products…
-              </p>
+              <AdminProductSkeleton />
             ) : filteredProducts.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">
                 No products match your search.

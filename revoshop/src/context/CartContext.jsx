@@ -290,6 +290,7 @@ export function CartProvider({ children }) {
   const value = useMemo(
     () => ({
       cartItems: state.cartItems,
+      hydrated: state.hydrated,
       cartItemCount,
       cartTotal,
       cartNotification: state.cartNotification,
@@ -306,6 +307,7 @@ export function CartProvider({ children }) {
     }),
     [
       state.cartItems,
+      state.hydrated,
       state.cartNotification,
       state.selectedProductVoucher,
       state.selectedShippingVoucher,

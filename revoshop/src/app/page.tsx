@@ -45,6 +45,69 @@ function isProductArray(data: unknown): data is Product[] {
   return Array.isArray(data);
 }
 
+function HomeSkeleton() {
+  return (
+    <main
+      className="min-h-screen bg-muted/30 px-4 py-8 sm:px-6 lg:px-8"
+      aria-busy="true"
+      aria-label="Loading product catalog"
+    >
+      <section className="mx-auto max-w-7xl animate-pulse">
+        <div className="mb-8">
+          <div className="h-6 w-36 rounded-full bg-muted" />
+          <div className="mt-3 h-9 w-52 rounded bg-muted" />
+          <div className="mt-2 h-5 w-64 rounded bg-muted" />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+          <aside>
+            <Card className="bg-background shadow-sm">
+              <CardHeader>
+                <div className="h-6 w-20 rounded-full bg-muted" />
+                <div className="h-6 w-32 rounded bg-muted" />
+                <div className="h-4 w-full rounded bg-muted" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Array.from({ length: 5 }, (_, index) => (
+                  <div
+                    key={index}
+                    className="h-8 w-full rounded-md bg-muted"
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          </aside>
+
+          <div>
+            <div className="mb-4 rounded-lg border bg-background p-4 shadow-sm">
+              <div className="h-5 w-32 rounded bg-muted" />
+              <div className="mt-2 h-4 w-44 rounded bg-muted" />
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }, (_, index) => (
+                <Card key={index} className="overflow-hidden">
+                  <div className="h-56 w-full bg-muted" />
+                  <CardHeader>
+                    <div className="h-5 w-24 rounded-full bg-muted" />
+                    <div className="h-6 w-3/4 rounded bg-muted" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-7 w-24 rounded bg-muted" />
+                  </CardContent>
+                  <div className="px-6 pb-6">
+                    <div className="h-9 w-full rounded-md bg-muted" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -108,7 +171,7 @@ function HomeContent() {
   }, []);
 
   if (loading) {
-    return <p className="p-8">Loading products...</p>;
+    return <HomeSkeleton />;
   }
 
   if (error) {
@@ -249,7 +312,7 @@ function HomeContent() {
 export default function HomePage() {
   return (
 
-    <Suspense fallback={<p className="p-8">Loading products...</p>}> {}
+    <Suspense fallback={<HomeSkeleton />}> {}
       <HomeContent />
     </Suspense>);
 

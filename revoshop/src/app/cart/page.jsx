@@ -46,6 +46,74 @@ import { isVoucherCategoryEligible } from "@/lib/cart";
 
 const FREE_SHIPPING_THRESHOLD = 750;
 
+function CartSkeleton() {
+  return (
+    <main
+      className="min-h-screen bg-muted/30 px-4 py-8 text-foreground sm:px-6 lg:px-8"
+      aria-busy="true"
+      aria-label="Loading shopping cart"
+    >
+      <section className="mx-auto max-w-7xl animate-pulse">
+        <div className="mb-8">
+          <div className="h-9 w-40 rounded bg-muted" />
+          <div className="mt-3 h-6 w-28 rounded-full bg-muted" />
+          <div className="mt-3 h-10 w-64 rounded bg-muted" />
+          <div className="mt-2 h-5 w-full max-w-xl rounded bg-muted" />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+          <div className="space-y-4">
+            {Array.from({ length: 3 }, (_, index) => (
+              <Card key={index} className="bg-background shadow-sm">
+                <CardContent className="grid gap-4 p-4 sm:grid-cols-[112px_1fr] sm:p-5">
+                  <div className="aspect-square rounded-lg bg-muted" />
+                  <div className="flex flex-col justify-between gap-4">
+                    <div>
+                      <div className="h-5 w-24 rounded-full bg-muted" />
+                      <div className="mt-3 h-6 w-3/4 rounded bg-muted" />
+                      <div className="mt-3 h-4 w-36 rounded bg-muted" />
+                    </div>
+                    <div className="flex justify-between">
+                      <div className="h-9 w-32 rounded-lg bg-muted" />
+                      <div className="h-7 w-24 rounded bg-muted" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="h-fit bg-background shadow-sm">
+            <CardHeader>
+              <div className="h-6 w-36 rounded-full bg-muted" />
+              <div className="h-8 w-40 rounded bg-muted" />
+              <div className="h-4 w-48 rounded bg-muted" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Array.from({ length: 4 }, (_, index) => (
+                <div key={index} className="flex justify-between">
+                  <div className="h-4 w-28 rounded bg-muted" />
+                  <div className="h-4 w-20 rounded bg-muted" />
+                </div>
+              ))}
+              <Separator />
+              <div className="flex justify-between">
+                <div className="h-6 w-16 rounded bg-muted" />
+                <div className="h-8 w-28 rounded bg-muted" />
+              </div>
+              <div className="h-20 rounded-lg bg-muted" />
+            </CardContent>
+            <CardFooter className="flex-col gap-3">
+              <div className="h-9 w-full rounded-md bg-muted" />
+              <div className="h-9 w-full rounded-md bg-muted" />
+            </CardFooter>
+          </Card>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function calculateProductVoucherDiscount(cartItems, voucher) {
   if (!voucher) {
     return {
@@ -113,6 +181,7 @@ function calculateShippingVoucherDiscount(subtotal, voucher, shipping) {
 export default function CartPage() {
   const {
     cartItems,
+    hydrated,
     selectedProductVoucher,
     selectedShippingVoucher,
     updateQuantity,
@@ -169,6 +238,10 @@ export default function CartPage() {
     FREE_SHIPPING_THRESHOLD - cartSummary.subtotal,
     0
   );
+
+  if (!hydrated) {
+    return <CartSkeleton />;
+  }
 
   if (cartItems.length === 0) {
     return (
