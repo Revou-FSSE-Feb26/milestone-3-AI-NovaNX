@@ -165,6 +165,7 @@ export default function Navbar() {
                 
                 <Link
                   href={link.href}
+                  prefetch={isAdminLink ? false : undefined}
                   title={
                   isRestrictedAdminLink ?
                   "Halaman ini hanya diakses oleh Admin." :
@@ -326,6 +327,7 @@ export default function Navbar() {
                         
                         <Link
                           href={link.href}
+                          prefetch={isAdminLink ? false : undefined}
                           title={
                           isRestrictedAdminLink ?
                           "Halaman ini hanya diakses oleh Admin." :
